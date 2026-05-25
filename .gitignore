@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# Large auto-downloaded data files (not tracked in git)
+data/go-basic.obo
+data/gene2go*
+data/genes_ncbi_homo_sapiens_proteincoding.py
+
+# LLM cluster cache (generated at runtime)
+results/cluster_cache/
