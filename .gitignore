@@ -7,6 +7,10 @@ __pycache__/
 data/go-basic.obo
 data/gene2go*
 data/genes_ncbi_homo_sapiens_proteincoding.py
+data/reactome_gene2pathway.txt
+
+# Local agent config
+.claude/
 
 # LLM cluster cache (generated at runtime)
 results/cluster_cache/
