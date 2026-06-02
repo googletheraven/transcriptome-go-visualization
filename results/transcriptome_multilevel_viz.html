@@ -77,6 +77,10 @@ section:nth-child(odd){background:#fff}section:nth-child(even){background:var(--
   <div class="nconn"></div>
   <a class="ni" href="#s5"><span class="nd">5</span>Across Cell Types</a>
   <div style="flex:1"></div>
+  <a class="ni" href="database_lenses.html" style="background:rgba(217,119,6,.10);border:1px solid rgba(217,119,6,.35);margin-bottom:14px">
+    <span class="nd" style="background:var(--hero)">↗</span>
+    <span>Database Lenses<br><span style="font-size:10px;color:var(--muted);font-weight:400">Same data · 8 vocabularies</span></span>
+  </a>
   <div style="font-size:10px;color:var(--muted);line-height:1.7">
     Hero: <strong style="color:var(--hero)">SDHA</strong><br>
     TCA cycle / Complex II<br>Tabula Sapiens blood<br>85,233 cells · 22 types<br>MitoCarta 3.0 · 1,136 genes
@@ -280,8 +284,25 @@ section:nth-child(odd){background:#fff}section:nth-child(even){background:var(--
   <p class="sd">Schematic UMAP coloured by <strong>mitochondrial gene expression</strong> (amber = high OXPHOS activity; blue = low).
   Bubble size ∝ <strong>total RNA counts</strong> across all genes (Tabula Sapiens blood).
   Bubble size = total mitochondria-annotated genes detected. Hover for breakdown.</p>
-  <div class="warn">⚠️ Schematic UMAP — positions and scores estimated from published cell-type biology.</div>
-  <div class="card"><div id="ct-plot" style="height:500px"></div></div>
+  <div style="margin-bottom:8px;display:flex;gap:6px">
+    <button class="btn active" id="l5-btn-umap" onclick="setL5View('umap')">🗺 UMAP</button>
+    <button class="btn" id="l5-btn-andrews" onclick="setL5View('andrews')">〰 Andrews curves</button>
+  </div>
+  <div id="l5-umap-view">
+    <div class="warn">⚠️ Schematic UMAP — positions and scores estimated from published cell-type biology.</div>
+    <div class="card"><div id="ct-plot" style="height:500px"></div></div>
+  </div>
+  <div id="l5-andrews-view" style="display:none">
+    <div class="card">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.5">
+        Each curve is one cell type, described by its <strong>10 most-variable MitoCarta genes</strong> (z-scored across the 17 cell types).
+        Andrews curve: f(t)=x₁/√2 + x₂·sin t + x₃·cos t + x₄·sin 2t + … — cell types with similar mitochondrial profiles trace similar curves.
+        Source: Tabula Sapiens (real, 1,132 MitoCarta genes). Click a legend group to filter.
+      </div>
+      <div id="andrews-wrap" style="position:relative"><svg id="andrews-svg"></svg></div>
+      <div class="legend" id="andrews-legend" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px 16px"></div>
+    </div>
+  </div>
 </section>
 
 </div>
@@ -1327,6 +1348,15 @@ function setL4View(v) {
   document.getElementById('l4-btn-radial').classList.toggle('active', v==='radial');
 }
 
+let _andrewsDrawn = false;
+function setL5View(v) {
+  document.getElementById('l5-umap-view').style.display    = v==='umap'    ? 'block' : 'none';
+  document.getElementById('l5-andrews-view').style.display = v==='andrews' ? 'block' : 'none';
+  document.getElementById('l5-btn-umap').classList.toggle('active',    v==='umap');
+  document.getElementById('l5-btn-andrews').classList.toggle('active', v==='andrews');
+  if (v==='andrews' && !_andrewsDrawn) { _andrewsDrawn = true; initAndrews(); }
+}
+
 // ════════════════════════════════════════════════════
 // LEVEL 5 — Cell types (D3) — mitochondrial activity
 // ════════════════════════════════════════════════════
@@ -1449,6 +1479,125 @@ function setL4View(v) {
   svg.append('text').attr('x',cbX+cbW/2).attr('y',cbY-3)
     .attr('text-anchor','middle').attr('font-size',9).attr('fill','#64748b').text('(mean counts)');
 })();
+
+// ════════════════════════════════════════════════════
+// LEVEL 5 (alt view) — Andrews curves across cell types
+// Real Tabula Sapiens data: 17 cell types × 10 most-variable MitoCarta genes
+// (z-scored). Computed offline; see results/prototype_andrews_curves.html.
+// ════════════════════════════════════════════════════
+function initAndrews(){
+  const FEATURE_GENES = ["PDK4","SLC25A4","UCP2","ATP5F1A","LDHB","ATP5F1B","IDH2","SOD2","VDAC3","CYCS"];
+  const CELL_DATA = [
+    {name:"B cell",                              feats:[-0.64359,-0.4547,0.4735,-0.39679,-0.23523,-0.67194,-0.61381,-1.27114,-0.73069,-0.40745]},
+    {name:"T cell",                              feats:[-0.33997,-0.215,0.33648,0.03045,-0.01784,-0.15555,-0.38544,-0.85823,-0.20229,-0.11537]},
+    {name:"classical monocyte",                  feats:[-0.1782,-0.77536,-0.09153,-0.78685,-0.83659,-0.82915,-0.89736,-0.36885,-0.86612,-0.98639]},
+    {name:"erythrocyte",                         feats:[-0.7904,-0.7779,0.37517,-1.68212,-1.40162,-0.63295,-1.25212,-1.44015,-1.30603,-1.68489]},
+    {name:"erythroid progenitor cell",           feats:[-0.73063,-0.33944,1.21642,1.32789,1.62519,1.07206,1.32393,0.07419,1.34827,0.81238]},
+    {name:"hematopoietic stem cell",             feats:[-0.75072,-0.02188,1.366,1.36681,2.00307,1.04629,1.24099,0.55338,1.15001,0.54757]},
+    {name:"macrophage",                          feats:[0.31221,-0.70369,0.27446,-0.6532,-0.3615,-0.59143,-0.73901,0.50059,-0.5895,-0.44154]},
+    {name:"mature NK T cell",                    feats:[-0.72064,-0.19425,0.83031,0.13758,0.02367,0.06053,-0.00805,-1.2022,0.08006,-0.10236]},
+    {name:"monocyte",                            feats:[-0.11541,-0.76009,0.00045,-0.68912,-0.61165,-0.78317,-0.83563,-0.56472,-0.69278,-1.00821]},
+    {name:"neutrophil",                          feats:[-0.77586,-0.77742,-1.32203,-1.51415,-1.407,-2.03233,-1.2591,-0.31028,-1.42517,-1.62399]},
+    {name:"platelet",                            feats:[-0.77866,-0.77649,1.66672,-0.60835,0.70465,-0.5181,-0.18024,1.15327,1.29817,0.23717]},
+    {name:"cardiac muscle cell",                 feats:[-0.69713,0.69917,-1.26476,0.10709,0.42434,-0.04918,-0.21035,-1.1993,-0.21749,0.1586]},
+    {name:"fast muscle cell",                    feats:[1.44582,2.09423,0.22506,1.26666,-0.06544,1.45077,1.64253,0.88315,1.35804,1.38945]},
+    {name:"hepatocyte",                          feats:[-0.36648,-0.48963,-1.38183,-0.70099,-1.41132,-0.6582,0.51432,0.23973,-1.21528,-0.37881]},
+    {name:"muscle cell",                         feats:[2.21582,1.45641,-1.36179,0.76571,0.93981,1.22975,0.32306,1.87397,0.05794,1.82032]},
+    {name:"skeletal muscle satellite stem cell", feats:[1.37905,-0.16494,-1.20133,0.55345,0.75451,0.46266,-0.54484,0.86332,0.97571,0.6365]},
+    {name:"slow muscle cell",                    feats:[1.53479,2.20099,-0.14129,1.47593,-0.12704,1.59994,1.88111,1.07327,0.97716,1.147]},
+  ];
+  const CATEGORIES = [
+    {id:"myeloid", label:"Myeloid", color:"#4a90e2",
+     cellColors:{"classical monocyte":"#6aaaf0","monocyte":"#4a90e2","macrophage":"#2d6cbf","neutrophil":"#1a4d99"}},
+    {id:"lymphoid", label:"Lymphoid T/NK", color:"#2eaa60",
+     cellColors:{"T cell":"#56c987","mature NK T cell":"#2eaa60"}},
+    {id:"bcell", label:"B cell", color:"#9b59f0", cellColors:{"B cell":"#9b59f0"}},
+    {id:"progenitor", label:"Progenitors", color:"#e08e0b",
+     cellColors:{"hematopoietic stem cell":"#f5a623","erythroid progenitor cell":"#d47f10"}},
+    {id:"erythro", label:"Erythrocyte / Platelet", color:"#e25050",
+     cellColors:{"erythrocyte":"#e25050","platelet":"#b82020"}},
+    {id:"other", label:"Other tissue (muscle, liver)", color:"#94a3b8",
+     cellColors:{"cardiac muscle cell":"#94a3b8","fast muscle cell":"#7c8a9c","hepatocyte":"#64748b","muscle cell":"#52606d","skeletal muscle satellite stem cell":"#aab4c0","slow muscle cell":"#788596"}},
+  ];
+  const catMap={};
+  CATEGORIES.forEach(c=>Object.keys(c.cellColors).forEach(n=>catMap[n]=c));
+  CELL_DATA.forEach(d=>{ const c=catMap[d.name]||CATEGORIES[5];
+    d.category=c.id; d.color=c.cellColors[d.name]||c.color; d.catLabel=c.label; });
+
+  const STEPS=200, TMIN=-Math.PI, TMAX=Math.PI;
+  function aVal(x,t){ let f=x[0]/Math.SQRT2;
+    for(let k=1;k<x.length;k++){ const fr=Math.ceil(k/2);
+      f += k%2===1 ? x[k]*Math.sin(fr*t) : x[k]*Math.cos(fr*t); } return f; }
+  CELL_DATA.forEach(d=>{ const p=[]; for(let i=0;i<=STEPS;i++){ const t=TMIN+(TMAX-TMIN)*i/STEPS; p.push([t,aVal(d.feats,t)]); } d.curve=p; });
+  const allY=CELL_DATA.flatMap(d=>d.curve.map(p=>p[1]));
+  const yExt=[d3.min(allY),d3.max(allY)];
+
+  const wrap=document.getElementById('andrews-wrap');
+  const W=Math.max(320, Math.min(wrap.clientWidth||820, 900)), H=Math.min(W*0.5,440);
+  const M={top:14,right:120,bottom:38,left:46}, iW=W-M.left-M.right, iH=H-M.top-M.bottom;
+  const svg=d3.select('#andrews-svg').attr('width',W).attr('height',H);
+  svg.selectAll('*').remove();
+  const g=svg.append('g').attr('transform',`translate(${M.left},${M.top})`);
+  const x=d3.scaleLinear().domain([TMIN,TMAX]).range([0,iW]);
+  const yPad=Math.abs(yExt[1]-yExt[0])*0.06;
+  const y=d3.scaleLinear().domain([yExt[0]-yPad,yExt[1]+yPad]).range([iH,0]);
+  g.append('g').attr('color','#e2e8f0').call(d3.axisLeft(y).ticks(6).tickSize(-iW).tickFormat(''))
+    .call(a=>a.select('.domain').remove());
+  g.append('line').attr('x1',0).attr('x2',iW).attr('y1',y(0)).attr('y2',y(0))
+    .attr('stroke','#cbd5e1').attr('stroke-dasharray','4,4');
+  const piT=[-Math.PI,-Math.PI/2,0,Math.PI/2,Math.PI], piL={};
+  piL[(-Math.PI).toFixed(3)]='−π'; piL[(-Math.PI/2).toFixed(3)]='−π/2'; piL['0.000']='0';
+  piL[(Math.PI/2).toFixed(3)]='π/2'; piL[(Math.PI).toFixed(3)]='π';
+  const xa=g.append('g').attr('transform',`translate(0,${iH})`)
+    .call(d3.axisBottom(x).tickValues(piT).tickFormat(t=>piL[t.toFixed(3)]??''));
+  xa.selectAll('line,path').attr('stroke','#cbd5e1'); xa.selectAll('text').attr('fill','#64748b').attr('font-size',10);
+  g.append('text').attr('x',iW/2).attr('y',iH+34).attr('text-anchor','middle').attr('fill','#94a3b8').attr('font-size',10).text('t  (−π → π)');
+
+  svg.append('defs').append('clipPath').attr('id','andrews-clip').append('rect').attr('width',iW).attr('height',iH);
+  const curvesG=g.append('g').attr('clip-path','url(#andrews-clip)');
+  const labelsG=g.append('g');
+  const lineGen=d3.line().x(p=>x(p[0])).y(p=>y(p[1])).curve(d3.curveCatmullRom.alpha(0.5));
+  let active=new Set(CATEGORIES.map(c=>c.id));
+
+  function tipHTML(d){
+    const rows=d.feats.map((v,i)=>`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#94a3b8">${FEATURE_GENES[i]}</span><span>${v.toFixed(2)}</span></div>`).join('');
+    return `<strong>${d.name}</strong><br><span style="color:${d.color}">${d.catLabel}</span><div style="margin-top:4px;font-size:11px">${rows}</div>`;
+  }
+  function draw(){
+    const sub=CELL_DATA.filter(d=>active.has(d.category));
+    const paths=curvesG.selectAll('path.acurve').data(sub,d=>d.name);
+    paths.enter().append('path').attr('class','acurve').attr('fill','none')
+      .merge(paths)
+      .attr('d',d=>lineGen(d.curve)).attr('stroke',d=>d.color).attr('stroke-width',1.7).attr('opacity',0.78)
+      .style('cursor','pointer')
+      .on('mouseover',function(e,d){ d3.select(this).raise().attr('stroke-width',3).attr('opacity',1);
+        labelsG.selectAll('text').filter(t=>t===d).attr('font-weight',700).attr('fill','#1e293b');
+        showTip(e,tipHTML(d)); })
+      .on('mousemove',moveTip)
+      .on('mouseout',function(e,d){ d3.select(this).attr('stroke-width',1.7).attr('opacity',0.78);
+        labelsG.selectAll('text').filter(t=>t===d).attr('font-weight',400).attr('fill','#64748b');
+        hideTip(); });
+    paths.exit().remove();
+    const labs=labelsG.selectAll('text.albl').data(sub,d=>d.name);
+    labs.enter().append('text').attr('class','albl').attr('dy','0.35em')
+      .attr('font-size',9).attr('fill','#64748b')
+      .merge(labs)
+      .attr('x',d=>x(d.curve[d.curve.length-1][0])+4).attr('y',d=>y(d.curve[d.curve.length-1][1]))
+      .text(d=>d.name);
+    labs.exit().remove();
+  }
+  draw();
+
+  const leg=d3.select('#andrews-legend'); leg.selectAll('*').remove();
+  CATEGORIES.forEach(c=>{
+    const item=leg.append('div').style('cursor','pointer')
+      .style('display','flex').style('align-items','center').style('gap','6px').style('font-size','11px')
+      .on('click',function(){ if(active.has(c.id)){active.delete(c.id); d3.select(this).style('opacity',0.35);}
+        else{active.add(c.id); d3.select(this).style('opacity',1);} draw(); });
+    item.append('span').style('width','16px').style('height','3px').style('border-radius','2px').style('background',c.color).style('display','inline-block');
+    item.append('span').style('color','#475569').text(c.label);
+  });
+}
 </script>
 </body>
 </html>
