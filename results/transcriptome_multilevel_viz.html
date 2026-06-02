@@ -191,12 +191,22 @@ section:nth-child(odd){background:#fff}section:nth-child(even){background:var(--
 <!-- ══ L3r — Reactome groups ══ -->
 <section id="s3r">
   <div class="sh"><span class="sb">Level 3½</span><h1 class="st">Mitochondrial Processes — Reactome Categories</h1></div>
-  <p class="sd">All MitoCarta 3.0 genes grouped into biologically coherent <strong>Reactome pathway categories</strong>.
-  Area ∝ total mean RNA counts across category genes (Tabula Sapiens blood). Same two cell types as Level 3.
+  <p class="sd">All MitoCarta 3.0 genes grouped into <strong>Reactome pathway categories</strong> (all 126 subgroups, selectable below).
+  Area ∝ total mean RNA counts across each subgroup's MitoCarta genes (Tabula Sapiens blood). Same two cell types as Level 3.
   <span style="color:var(--hero);font-weight:600">Aerobic respiration & ETC (amber) contains SDHA ✦</span>.</p>
   <div style="margin-bottom:8px;display:flex;gap:6px">
     <button class="btn active" id="l3r-btn-grid" onclick="setL3rView('grid')">▦ Grid</button>
     <button class="btn" id="l3r-btn-radial" onclick="setL3rView('radial')">✿ Radial Petal</button>
+  </div>
+  <div id="l3r-selector" class="card" style="margin-bottom:8px;padding:8px 10px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+      <span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Display categories</span>
+      <button class="btn" onclick="l3rSelect('all')">All 126</button>
+      <button class="btn" onclick="l3rSelect('none')">None</button>
+      <button class="btn" onclick="l3rSelect('default')">Defaults (16)</button>
+      <span id="l3r-count" style="font-size:11px;color:var(--muted)"></span>
+    </div>
+    <div id="l3r-checks" style="max-height:160px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1px 14px;font-size:11px"></div>
   </div>
   <div class="card" id="l3r-grid-view" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
     <img src="mito.png" alt="Mitochondrion (BioRender)" style="width:280px;border-radius:8px;flex-shrink:0;align-self:center">
@@ -225,7 +235,7 @@ section:nth-child(odd){background:#fff}section:nth-child(even){background:var(--
     <div class="li" style="color:var(--muted)">Area / radius ∝ total RNA counts · MitoCarta 3.0 × Reactome × Tabula Sapiens</div>
   </div>
   <div class="bridge"><span>🔬</span><span>
-    <strong>Thread to Level 4:</strong> These ~15 Reactome categories summarise all mitochondrial function.
+    <strong>Thread to Level 4:</strong> These Reactome categories (126 subgroups, toggle any subset above) summarise all mitochondrial function.
     The next level zooms into each individual MitoCarta pathway (107 tiles at leaf resolution).
   </span></div>
 </section>
@@ -1004,47 +1014,31 @@ function setL3View(v) {
   const H = 360;
   const getW = id => Math.max(200, Math.min(document.getElementById(id).parentElement.clientWidth - 4, 360));
 
-  // Reactome subgroup totals for MitoCarta genes — neutrophil / classical monocyte
-  // Source: Reactome pathway hierarchy × MitoCarta 3.0 × Tabula Sapiens blood
-  const groups = [
-    {name:'Aerobic Resp.\n& ETC',       neutrophil:104.9, monocyte:324.4, hero:true,
-     note:'Reactome: Aerobic respiration and respiratory electron transport\nNeut=104.9 · Mono=324.4\n✦ Includes SDHA (Complex II), TCA cycle, OXPHOS'},
-    {name:'Translation',                neutrophil: 65.3, monocyte:217.4,
-     note:'Reactome: Translation\nNeut=65.3 · Mono=217.4\nIncludes mitochondrial ribosome and mt-tRNA'},
-    {name:'Lipid\nMetabolism',          neutrophil: 85.7, monocyte:161.3,
-     note:'Reactome: Metabolism of lipids\nNeut=85.7 · Mono=161.3\nFatty acid oxidation, phospholipids, cardiolipin'},
-    {name:'Transcription',              neutrophil: 69.3, monocyte:144.5,
-     note:'Reactome: RNA Polymerase II Transcription\nNeut=69.3 · Mono=144.5\nIncludes mitochondrial transcription factors'},
-    {name:'Stress\nResponse',           neutrophil: 50.0, monocyte:115.2,
-     note:'Reactome: Cellular responses to stress\nNeut=50.0 · Mono=115.2\nROS handling, heat shock, antioxidant defence'},
-    {name:'Protein\nHomeostasis',       neutrophil: 48.8, monocyte:148.7,
-     note:'Reactome: Metabolism of proteins + Mitochondrial protein degradation\nNeut=48.8 · Mono=148.7\nImport, chaperones, proteases, quality control'},
-    {name:'Innate\nImmune',             neutrophil: 34.1, monocyte: 40.2,
-     note:'Reactome: Innate Immune System\nNeut=34.1 · Mono=40.2\nInflammation, DAMP signalling, NF-κB'},
-    {name:'Mito\nBiogenesis',           neutrophil: 19.2, monocyte: 53.9,
-     note:'Reactome: Mitochondrial biogenesis\nNeut=19.2 · Mono=53.9\nFission, fusion, PGC-1α axis'},
-    {name:'Mito Protein\nDegradation',  neutrophil: 17.3, monocyte: 52.1,
-     note:'Reactome: Mitochondrial protein degradation\nNeut=17.3 · Mono=52.1\nLon protease, ClpXP, AAA proteases'},
-    {name:'Amino Acid\nMetabolism',     neutrophil: 15.9, monocyte: 29.3,
-     note:'Reactome: Metabolism of amino acids and derivatives\nNeut=15.9 · Mono=29.3\nBCAA, lysine, GABA, urea cycle'},
-    {name:'Apoptosis',                  neutrophil: 17.6, monocyte: 27.6,
-     note:'Reactome: Apoptosis\nNeut=17.6 · Mono=27.6\nMitochondria-mediated (intrinsic pathway), Bcl-2 family'},
-    {name:'Autophagy',                  neutrophil:  7.3, monocyte: 23.1,
-     note:'Reactome: Macroautophagy\nNeut=7.3 · Mono=23.1\nMitophagy, selective autophagy'},
-    {name:'Vitamin &\nCofactor Metab.', neutrophil:  8.9, monocyte: 19.7,
-     note:'Reactome: Metabolism of vitamins and cofactors\nNeut=8.9 · Mono=19.7\nCoA, NAD, folate, riboflavin'},
-    {name:'Biological\nOxidations',     neutrophil:  3.9, monocyte: 19.2,
-     note:'Reactome: Biological oxidations\nNeut=3.9 · Mono=19.2\nPhase I/II detoxification, CYPs'},
-    {name:'Protein\nImport',            neutrophil:  3.1, monocyte: 17.1,
-     note:'Reactome: Mitochondrial protein import\nNeut=3.1 · Mono=17.1\nTOM, TIM23, TIM22, OXA complexes'},
-    {name:'Ca²⁺\nTransport',            neutrophil:  5.9, monocyte: 13.8,
-     note:'Reactome: Mitochondrial calcium ion transport\nNeut=5.9 · Mono=13.8\nMCU complex, permeability transition pore'},
-  ];
+  // ── Reactome subgroups (126). neut/mono = summed mean RNA over each subgroup's
+  //    MitoCarta genes (Tabula Sapiens blood). Reproducible from data/reactome_mito_groups.tsv.
+  const SUBGROUPS = [{"id": "R-HSA-1430728", "g": "Metabolism", "name": "Metabolism", "neut": 64.4, "mono": 164.8, "ng": 509, "hero": false, "def": false}, {"id": "R-HSA-1428517", "g": "Metabolism", "name": "Aerobic respiration and respiratory electron transport", "neut": 36.4, "mono": 114.0, "ng": 228, "hero": true, "def": true}, {"id": "R-HSA-392499", "g": "Metabolism of proteins", "name": "Metabolism of proteins", "neut": 31.5, "mono": 96.6, "ng": 249, "hero": false, "def": true}, {"id": "R-HSA-72766", "g": "Metabolism of proteins", "name": "Translation", "neut": 19.8, "mono": 56.1, "ng": 130, "hero": false, "def": true}, {"id": "R-HSA-9837999", "g": "Metabolism of proteins", "name": "Mitochondrial protein degradation", "neut": 17.3, "mono": 52.1, "ng": 97, "hero": false, "def": true}, {"id": "R-HSA-74160", "g": "Gene expression (Transcription)", "name": "Gene expression (Transcription)", "neut": 20.2, "mono": 37.7, "ng": 57, "hero": false, "def": false}, {"id": "R-HSA-8953897", "g": "Cellular responses to stimuli", "name": "Cellular responses to stimuli", "neut": 15.2, "mono": 37.4, "ng": 52, "hero": false, "def": false}, {"id": "R-HSA-2262752", "g": "Cellular responses to stimuli", "name": "Cellular responses to stress", "neut": 14.8, "mono": 36.7, "ng": 51, "hero": false, "def": true}, {"id": "R-HSA-73857", "g": "Gene expression (Transcription)", "name": "RNA Polymerase II Transcription", "neut": 16.6, "mono": 34.6, "ng": 47, "hero": false, "def": true}, {"id": "R-HSA-556833", "g": "Metabolism", "name": "Metabolism of lipids", "neut": 15.7, "mono": 27.3, "ng": 110, "hero": false, "def": true}, {"id": "R-HSA-1852241", "g": "Organelle biogenesis and maintenance", "name": "Organelle biogenesis and maintenance", "neut": 10.0, "mono": 27.2, "ng": 50, "hero": false, "def": false}, {"id": "R-HSA-1592230", "g": "Organelle biogenesis and maintenance", "name": "Mitochondrial biogenesis", "neut": 9.5, "mono": 26.5, "ng": 48, "hero": false, "def": true}, {"id": "R-HSA-9609507", "g": "Protein localization", "name": "Protein localization", "neut": 4.4, "mono": 23.0, "ng": 96, "hero": false, "def": false}, {"id": "R-HSA-1268020", "g": "Protein localization", "name": "Mitochondrial protein import", "neut": 3.1, "mono": 17.1, "ng": 64, "hero": false, "def": true}, {"id": "R-HSA-168256", "g": "Immune System", "name": "Immune System", "neut": 13.1, "mono": 16.4, "ng": 39, "hero": false, "def": false}, {"id": "R-HSA-1643685", "g": "Disease", "name": "Disease", "neut": 11.0, "mono": 16.0, "ng": 70, "hero": false, "def": false}, {"id": "R-HSA-382551", "g": "Transport of small molecules", "name": "Transport of small molecules", "neut": 8.0, "mono": 14.8, "ng": 45, "hero": false, "def": false}, {"id": "R-HSA-162582", "g": "Signal Transduction", "name": "Signal Transduction", "neut": 5.9, "mono": 11.6, "ng": 52, "hero": false, "def": false}, {"id": "R-HSA-168249", "g": "Immune System", "name": "Innate Immune System", "neut": 7.2, "mono": 10.8, "ng": 27, "hero": false, "def": true}, {"id": "R-HSA-71291", "g": "Metabolism", "name": "Metabolism of amino acids and derivatives", "neut": 5.4, "mono": 10.7, "ng": 87, "hero": false, "def": true}, {"id": "R-HSA-597592", "g": "Metabolism of proteins", "name": "Post-translational protein modification", "neut": 2.6, "mono": 7.9, "ng": 32, "hero": false, "def": false}, {"id": "R-HSA-8949215", "g": "Transport of small molecules", "name": "Mitochondrial calcium ion transport", "neut": 3.1, "mono": 7.7, "ng": 21, "hero": false, "def": true}, {"id": "R-HSA-1280215", "g": "Immune System", "name": "Cytokine Signaling in Immune system", "neut": 7.0, "mono": 6.8, "ng": 15, "hero": false, "def": false}, {"id": "R-HSA-196854", "g": "Metabolism", "name": "Metabolism of vitamins and cofactors", "neut": 2.6, "mono": 6.2, "ng": 55, "hero": false, "def": true}, {"id": "R-HSA-211859", "g": "Metabolism", "name": "Biological oxidations", "neut": 1.3, "mono": 6.1, "ng": 33, "hero": false, "def": true}, {"id": "R-HSA-9612973", "g": "Autophagy", "name": "Autophagy", "neut": 1.9, "mono": 6.0, "ng": 20, "hero": false, "def": false}, {"id": "R-HSA-1632852", "g": "Autophagy", "name": "Macroautophagy", "neut": 1.9, "mono": 6.0, "ng": 20, "hero": false, "def": true}, {"id": "R-HSA-5663205", "g": "Disease", "name": "Infectious disease", "neut": 1.9, "mono": 5.4, "ng": 16, "hero": false, "def": false}, {"id": "R-HSA-8953854", "g": "Metabolism of RNA", "name": "Metabolism of RNA", "neut": 0.8, "mono": 5.2, "ng": 42, "hero": false, "def": false}, {"id": "R-HSA-199991", "g": "Vesicle-mediated transport", "name": "Membrane Trafficking", "neut": 4.4, "mono": 5.0, "ng": 5, "hero": false, "def": false}, {"id": "R-HSA-5653656", "g": "Vesicle-mediated transport", "name": "Vesicle-mediated transport", "neut": 4.4, "mono": 5.0, "ng": 5, "hero": false, "def": false}, {"id": "R-HSA-9716542", "g": "Signal Transduction", "name": "Signaling by Rho GTPases, Miro GTPases and RHOBTB3", "neut": 2.6, "mono": 4.9, "ng": 20, "hero": false, "def": false}, {"id": "R-HSA-5357801", "g": "Programmed Cell Death", "name": "Programmed Cell Death", "neut": 2.3, "mono": 4.6, "ng": 19, "hero": false, "def": false}, {"id": "R-HSA-109581", "g": "Programmed Cell Death", "name": "Apoptosis", "neut": 2.3, "mono": 4.5, "ng": 18, "hero": false, "def": true}, {"id": "R-HSA-9033241", "g": "Protein localization", "name": "Peroxisomal protein import", "neut": 1.0, "mono": 4.4, "ng": 22, "hero": false, "def": false}, {"id": "R-HSA-5668914", "g": "Disease", "name": "Diseases of metabolism", "neut": 1.5, "mono": 4.1, "ng": 37, "hero": false, "def": false}, {"id": "R-HSA-15869", "g": "Metabolism", "name": "Metabolism of nucleotides", "neut": 2.4, "mono": 4.0, "ng": 19, "hero": false, "def": false}, {"id": "R-HSA-5663202", "g": "Disease", "name": "Diseases of signal transduction by growth factor receptors and second messengers", "neut": 4.4, "mono": 3.9, "ng": 7, "hero": false, "def": false}, {"id": "R-HSA-112316", "g": "Neuronal System", "name": "Neuronal System", "neut": 1.6, "mono": 3.7, "ng": 9, "hero": false, "def": false}, {"id": "R-HSA-112315", "g": "Neuronal System", "name": "Transmission across Chemical Synapses", "neut": 1.6, "mono": 3.7, "ng": 9, "hero": false, "def": false}, {"id": "R-HSA-917937", "g": "Transport of small molecules", "name": "Iron uptake and transport", "neut": 3.3, "mono": 3.2, "ng": 2, "hero": false, "def": false}, {"id": "R-HSA-2173782", "g": "Vesicle-mediated transport", "name": "Binding and Uptake of Ligands by Scavenger Receptors", "neut": 3.3, "mono": 3.2, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-109582", "g": "Hemostasis", "name": "Hemostasis", "neut": 1.8, "mono": 2.7, "ng": 10, "hero": false, "def": false}, {"id": "R-HSA-212165", "g": "Gene expression (Transcription)", "name": "Epigenetic regulation of gene expression", "neut": 3.5, "mono": 2.6, "ng": 4, "hero": false, "def": false}, {"id": "R-HSA-1362409", "g": "Metabolism", "name": "Mitochondrial iron-sulfur cluster biogenesis", "neut": 3.2, "mono": 2.5, "ng": 13, "hero": false, "def": false}, {"id": "R-HSA-9645723", "g": "Disease", "name": "Diseases of programmed cell death", "neut": 3.1, "mono": 2.5, "ng": 5, "hero": false, "def": false}, {"id": "R-HSA-397014", "g": "Muscle contraction", "name": "Muscle contraction", "neut": 0.7, "mono": 2.1, "ng": 4, "hero": false, "def": false}, {"id": "R-HSA-72306", "g": "Metabolism of RNA", "name": "tRNA processing", "neut": 0.4, "mono": 2.1, "ng": 19, "hero": false, "def": false}, {"id": "R-HSA-9006931", "g": "Signal Transduction", "name": "Signaling by Nuclear Receptors", "neut": 1.0, "mono": 2.1, "ng": 16, "hero": false, "def": false}, {"id": "R-HSA-9836573", "g": "Metabolism of RNA", "name": "Mitochondrial RNA degradation", "neut": 0.3, "mono": 2.1, "ng": 10, "hero": false, "def": false}, {"id": "R-HSA-1266738", "g": "Developmental Biology", "name": "Developmental Biology", "neut": 2.2, "mono": 2.0, "ng": 8, "hero": false, "def": false}, {"id": "R-HSA-425407", "g": "Transport of small molecules", "name": "SLC-mediated transmembrane transport", "neut": 0.3, "mono": 2.0, "ng": 12, "hero": false, "def": false}, {"id": "R-HSA-9006934", "g": "Signal Transduction", "name": "Signaling by Receptor Tyrosine Kinases", "neut": 0.7, "mono": 1.8, "ng": 5, "hero": false, "def": false}, {"id": "R-HSA-983231", "g": "Hemostasis", "name": "Factors involved in megakaryocyte development and platelet production", "neut": 1.6, "mono": 1.8, "ng": 6, "hero": false, "def": false}, {"id": "R-HSA-5683057", "g": "Signal Transduction", "name": "MAPK family signaling cascades", "neut": 1.1, "mono": 1.8, "ng": 4, "hero": false, "def": false}, {"id": "R-HSA-9937008", "g": "Metabolism of RNA", "name": "Mitochondrial mRNA modification", "neut": 0.2, "mono": 1.7, "ng": 11, "hero": false, "def": false}, {"id": "R-HSA-163685", "g": "Metabolism", "name": "Integration of energy metabolism", "neut": 0.7, "mono": 1.6, "ng": 6, "hero": false, "def": false}, {"id": "R-HSA-69306", "g": "DNA Replication", "name": "DNA Replication", "neut": 0.5, "mono": 1.6, "ng": 11, "hero": false, "def": false}, {"id": "R-HSA-9913635", "g": "DNA Replication", "name": "Strand-asynchronous mitochondrial DNA replication", "neut": 0.5, "mono": 1.6, "ng": 10, "hero": false, "def": false}, {"id": "R-HSA-5218859", "g": "Programmed Cell Death", "name": "Regulated Necrosis", "neut": 0.9, "mono": 1.6, "ng": 6, "hero": false, "def": false}, {"id": "R-HSA-1280218", "g": "Immune System", "name": "Adaptive Immune System", "neut": 0.8, "mono": 1.6, "ng": 6, "hero": false, "def": false}, {"id": "R-HSA-372790", "g": "Signal Transduction", "name": "Signaling by GPCR", "neut": 0.7, "mono": 1.6, "ng": 5, "hero": false, "def": false}, {"id": "R-HSA-9603798", "g": "Protein localization", "name": "Class I peroxisomal membrane protein import", "neut": 0.3, "mono": 1.5, "ng": 10, "hero": false, "def": false}, {"id": "R-HSA-72312", "g": "Metabolism of RNA", "name": "rRNA processing", "neut": 0.2, "mono": 1.4, "ng": 17, "hero": false, "def": false}, {"id": "R-HSA-9730414", "g": "Developmental Biology", "name": "MITF-M-regulated melanocyte development", "neut": 1.8, "mono": 1.4, "ng": 4, "hero": false, "def": false}, {"id": "R-HSA-9006925", "g": "Signal Transduction", "name": "Intracellular signaling by second messengers", "neut": 0.6, "mono": 1.2, "ng": 4, "hero": false, "def": false}, {"id": "R-HSA-445355", "g": "Muscle contraction", "name": "Smooth Muscle Contraction", "neut": 0.1, "mono": 1.1, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-73894", "g": "DNA Repair", "name": "DNA Repair", "neut": 0.4, "mono": 1.1, "ng": 10, "hero": false, "def": false}, {"id": "R-HSA-71387", "g": "Metabolism", "name": "Metabolism of carbohydrates and carbohydrate derivatives", "neut": 0.5, "mono": 1.1, "ng": 6, "hero": false, "def": false}, {"id": "R-HSA-202131", "g": "Metabolism", "name": "Metabolism of nitric oxide: NOS3 activation and regulation", "neut": 0.5, "mono": 1.0, "ng": 3, "hero": false, "def": false}, {"id": "R-HSA-5576891", "g": "Muscle contraction", "name": "Cardiac conduction", "neut": 0.5, "mono": 1.0, "ng": 3, "hero": false, "def": false}, {"id": "R-HSA-382556", "g": "Transport of small molecules", "name": "ABC-family protein mediated transport", "neut": 0.1, "mono": 1.0, "ng": 8, "hero": false, "def": false}, {"id": "R-HSA-1640170", "g": "Cell Cycle", "name": "Cell Cycle", "neut": 0.6, "mono": 1.0, "ng": 4, "hero": false, "def": false}, {"id": "R-HSA-73887", "g": "Signal Transduction", "name": "Death Receptor Signaling", "neut": 0.8, "mono": 0.9, "ng": 3, "hero": false, "def": false}, {"id": "R-HSA-9909396", "g": "Circadian clock", "name": "Circadian clock", "neut": 0.3, "mono": 0.8, "ng": 3, "hero": false, "def": false}, {"id": "R-HSA-73884", "g": "DNA Repair", "name": "Base Excision Repair", "neut": 0.1, "mono": 0.7, "ng": 7, "hero": false, "def": false}, {"id": "R-HSA-9613829", "g": "Autophagy", "name": "Chaperone Mediated Autophagy", "neut": 0.1, "mono": 0.7, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-9615710", "g": "Autophagy", "name": "Late endosomal microautophagy", "neut": 0.1, "mono": 0.7, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-9748784", "g": "Drug ADME", "name": "Drug ADME", "neut": 0.2, "mono": 0.7, "ng": 6, "hero": false, "def": false}, {"id": "R-HSA-9748787", "g": "Drug ADME", "name": "Azathioprine ADME", "neut": 0.2, "mono": 0.7, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-5617833", "g": "Organelle biogenesis and maintenance", "name": "Cilium Assembly", "neut": 0.4, "mono": 0.7, "ng": 2, "hero": false, "def": false}, {"id": "R-HSA-69278", "g": "Cell Cycle", "name": "Cell Cycle, Mitotic", "neut": 0.4, "mono": 0.6, "ng": 2, "hero": false, "def": false}, {"id": "R-HSA-5676934", "g": "Metabolism of proteins", "name": "Protein repair", "neut": 0.9, "mono": 0.6, "ng": 3, "hero": false, "def": false}, {"id": "R-HSA-5358351", "g": "Signal Transduction", "name": "Signaling by Hedgehog", "neut": 0.4, "mono": 0.6, "ng": 2, "hero": false, "def": false}, {"id": "R-HSA-9855142", "g": "Cellular responses to stimuli", "name": "Cellular responses to mechanical stimuli", "neut": 0.4, "mono": 0.6, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-9675108", "g": "Developmental Biology", "name": "Nervous system development", "neut": 0.4, "mono": 0.6, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-9675151", "g": "Disease", "name": "Disorders of Developmental Biology", "neut": 0.4, "mono": 0.6, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-445717", "g": "Transport of small molecules", "name": "Aquaporin-mediated transport", "neut": 0.4, "mono": 0.6, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-174824", "g": "Transport of small molecules", "name": "Plasma lipoprotein assembly, remodeling, and clearance", "neut": 0.4, "mono": 0.6, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-76002", "g": "Hemostasis", "name": "Platelet activation, signaling and aggregation", "neut": 0.1, "mono": 0.5, "ng": 2, "hero": false, "def": false}, {"id": "R-HSA-9675135", "g": "Disease", "name": "Diseases of DNA repair", "neut": 0.3, "mono": 0.5, "ng": 5, "hero": false, "def": false}, {"id": "R-HSA-189445", "g": "Metabolism", "name": "Metabolism of porphyrins", "neut": 0.1, "mono": 0.5, "ng": 8, "hero": false, "def": false}, {"id": "R-HSA-75944", "g": "Gene expression (Transcription)", "name": "Transcription from mitochondrial promoters", "neut": 0.1, "mono": 0.5, "ng": 4, "hero": false, "def": false}, {"id": "R-HSA-9933387", "g": "Circadian clock", "name": "RORA,B,C and NR1D1 (REV-ERBA) regulate gene expression", "neut": 0.1, "mono": 0.4, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-5693532", "g": "DNA Repair", "name": "DNA Double-Strand Break Repair", "neut": 0.3, "mono": 0.4, "ng": 4, "hero": false, "def": false}, {"id": "R-HSA-983712", "g": "Transport of small molecules", "name": "Ion channel transport", "neut": 0.8, "mono": 0.4, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-71737", "g": "Metabolism", "name": "Pyrophosphate hydrolysis", "neut": 0.2, "mono": 0.4, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-69620", "g": "Cell Cycle", "name": "Cell Cycle Checkpoints", "neut": 0.2, "mono": 0.3, "ng": 2, "hero": false, "def": false}, {"id": "R-HSA-2564830", "g": "Metabolism", "name": "Cytosolic iron-sulfur cluster assembly", "neut": 0.0, "mono": 0.3, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-1500620", "g": "Cell Cycle", "name": "Meiosis", "neut": 0.2, "mono": 0.3, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-1474165", "g": "Reproduction", "name": "Reproduction", "neut": 0.2, "mono": 0.3, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-202733", "g": "Hemostasis", "name": "Cell surface interactions at the vascular wall", "neut": 0.0, "mono": 0.3, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-1475029", "g": "Metabolism", "name": "Reversible hydration of carbon dioxide", "neut": 0.1, "mono": 0.3, "ng": 2, "hero": false, "def": false}, {"id": "R-HSA-1368108", "g": "Circadian clock", "name": "BMAL1:CLOCK,NPAS2 activates circadian expression", "neut": 0.1, "mono": 0.2, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-9609523", "g": "Protein localization", "name": "Insertion of tail-anchored proteins into the endoplasmic reticulum membrane", "neut": 0.0, "mono": 0.2, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-1474228", "g": "Extracellular matrix organization", "name": "Degradation of the extracellular matrix", "neut": 0.1, "mono": 0.2, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-1474244", "g": "Extracellular matrix organization", "name": "Extracellular matrix organization", "neut": 0.1, "mono": 0.2, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-2028269", "g": "Signal Transduction", "name": "Signaling by Hippo", "neut": 0.1, "mono": 0.2, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-9932298", "g": "Circadian clock", "name": "Degradation of CRY and PER proteins", "neut": 0.1, "mono": 0.1, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-9931510", "g": "Circadian clock", "name": "Phosphorylated BMAL1:CLOCK (ARNTL:CLOCK) activates expression of core clock genes", "neut": 0.1, "mono": 0.1, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-9931530", "g": "Circadian clock", "name": "Phosphorylation and nuclear translocation of the CRY:PER:kinase complex", "neut": 0.1, "mono": 0.1, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-9931521", "g": "Circadian clock", "name": "The CRY:PER:kinase complex represses transactivation by the BMAL:CLOCK (ARNTL:CLOCK) complex", "neut": 0.1, "mono": 0.1, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-5619115", "g": "Disease", "name": "Disorders of transmembrane transporters", "neut": 0.0, "mono": 0.1, "ng": 2, "hero": false, "def": false}, {"id": "R-HSA-211000", "g": "Gene expression (Transcription)", "name": "Gene Silencing by RNA", "neut": 0.0, "mono": 0.1, "ng": 3, "hero": false, "def": false}, {"id": "R-HSA-5223345", "g": "Transport of small molecules", "name": "Miscellaneous transport and binding events", "neut": 0.0, "mono": 0.1, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-391251", "g": "Metabolism of proteins", "name": "Protein folding", "neut": 0.0, "mono": 0.1, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-5696398", "g": "DNA Repair", "name": "Nucleotide Excision Repair", "neut": 0.0, "mono": 0.1, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-977225", "g": "Metabolism of proteins", "name": "Amyloid fiber formation", "neut": 0.0, "mono": 0.1, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-418346", "g": "Hemostasis", "name": "Platelet homeostasis", "neut": 0.1, "mono": 0.1, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-73886", "g": "Cell Cycle", "name": "Chromosome Maintenance", "neut": 0.0, "mono": 0.0, "ng": 2, "hero": false, "def": false}, {"id": "R-HSA-69239", "g": "DNA Replication", "name": "Synthesis of DNA", "neut": 0.0, "mono": 0.0, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-9709957", "g": "Sensory Perception", "name": "Sensory Perception", "neut": 0.0, "mono": 0.0, "ng": 2, "hero": false, "def": false}, {"id": "R-HSA-2187338", "g": "Sensory Perception", "name": "Visual phototransduction", "neut": 0.0, "mono": 0.0, "ng": 2, "hero": false, "def": false}, {"id": "R-HSA-9816359", "g": "Developmental Biology", "name": "Maternal to zygotic transition (MZT)", "neut": 0.0, "mono": 0.0, "ng": 1, "hero": false, "def": false}, {"id": "R-HSA-9749641", "g": "Drug ADME", "name": "Aspirin ADME", "neut": 0.0, "mono": 0.0, "ng": 5, "hero": false, "def": false}, {"id": "R-HSA-9843745", "g": "Developmental Biology", "name": "Adipogenesis", "neut": 0.0, "mono": 0.0, "ng": 2, "hero": false, "def": false}];
+  SUBGROUPS.forEach(d=>{ d.note = 'Reactome: '+d.name+'\n'+d.g+'\nNeut='+d.neut+' · Mono='+d.mono+' · n='+d.ng+' genes'; });
+  const selected = new Set(SUBGROUPS.filter(d=>d.def).map(d=>d.id));
+  const active = () => SUBGROUPS.filter(d=>selected.has(d.id));
+
+  function wrapLabel(s){
+    const words=String(s).split(' '); const lines=[]; let cur='';
+    words.forEach(w=>{ if((cur+' '+w).trim().length>15){ if(cur)lines.push(cur); cur=w; } else cur=(cur+' '+w).trim(); });
+    if(cur) lines.push(cur);
+    return lines.length>3 ? lines.slice(0,3).map((l,i)=>i===2?l.slice(0,12)+'…':l) : lines;
+  }
 
   function drawReactome(svgId, field) {
     const W = getW(svgId);
     const svg = d3.select('#'+svgId).attr('width', W).attr('height', H);
-    const root = d3.hierarchy({name:'r', children: groups.map(d=>({...d, n:d[field]}))}).sum(d=>d.n);
+    svg.selectAll('*').remove();
+    const data = active();
+    if(!data.length){
+      svg.append('text').attr('x',W/2).attr('y',H/2).attr('text-anchor','middle')
+        .attr('font-size',12).attr('fill','#94a3b8').text('No categories selected');
+      return;
+    }
+    const root = d3.hierarchy({name:'r', children: data.map(d=>({...d, n:d[field]}))}).sum(d=>Math.max(d.n,0.01));
     d3.treemap().size([W, H-16]).padding(3).round(true)(root);
 
     svg.selectAll('rect').data(root.leaves()).join('rect')
@@ -1060,9 +1054,9 @@ function setL3View(v) {
     svg.selectAll('g.rg').data(root.leaves()).join('g').attr('class','rg')
       .each(function(d){
         const tw=d.x1-d.x0, th=d.y1-d.y0;
-        if(tw<28||th<16) return;
-        const fs=Math.max(7,Math.min(11,tw/6,th/2.6));
-        const lines=d.data.name.split('\n');
+        if(tw<30||th<18) return;
+        const lines=wrapLabel(d.data.name);
+        const fs=Math.max(7,Math.min(11,tw/7,th/(lines.length*1.4)));
         const mx=(d.x0+d.x1)/2, my=(d.y0+d.y1)/2;
         const yTop=my-(lines.length-1)*fs*0.65;
         lines.forEach((ln,i)=>{
@@ -1080,17 +1074,19 @@ function setL3View(v) {
       .text('area ∝ total RNA counts · Reactome × MitoCarta 3.0 · Tabula Sapiens');
   }
 
-  drawReactome('reactome-svg-neut', 'neutrophil');
-  drawReactome('reactome-svg-mono', 'monocyte');
-
   // ── Radial view for Level 3½ ──────────────────────────────────
   function drawReactomeRadial(svgId, field) {
-    const R = 200, W = R*2+90, H = R*2+90, cx = W/2, cy = H/2;
-    const svg = d3.select('#'+svgId).attr('width', W).attr('height', H);
+    const R = 200, W = R*2+90, Hh = R*2+90, cx = W/2, cy = Hh/2;
+    const svg = d3.select('#'+svgId).attr('width', W).attr('height', Hh);
     svg.selectAll('*').remove();
-    const data = groups.map(d => ({...d, n: d[field]}));
-    const maxVal = d3.max(data, d => d.n);
-    const logS = v => Math.log1p(v) / Math.log1p(maxVal);
+    const data = active();
+    if(!data.length){
+      svg.append('text').attr('x',cx).attr('y',cy).attr('text-anchor','middle')
+        .attr('font-size',12).attr('fill','#94a3b8').text('No categories selected');
+      return;
+    }
+    const maxVal = d3.max(data, d => d[field]) || 1;
+    const logS = v => Math.log1p(Math.max(v,0)) / Math.log1p(maxVal);
     const n = data.length;
     const angleSlice = (Math.PI * 2) / n;
 
@@ -1104,19 +1100,21 @@ function setL3View(v) {
         .attr('stroke','#e2e8f0').attr('stroke-width',0.5).attr('opacity',0.5);
     });
 
-    const lineGen = d3.lineRadial()
-      .angle((d,i) => angleSlice*i)
-      .radius(d => logS(d.n) * R)
-      .curve(d3.curveLinearClosed);
-    svg.append('path').datum(data)
-      .attr('d', lineGen)
-      .attr('transform', `translate(${cx},${cy}) rotate(-90)`)
-      .attr('fill','#3b6cb7').attr('fill-opacity',0.25)
-      .attr('stroke','#3b6cb7').attr('stroke-width',1.5);
+    if(n>=3){
+      const lineGen = d3.lineRadial()
+        .angle((d,i) => angleSlice*i)
+        .radius(d => logS(d[field]) * R)
+        .curve(d3.curveLinearClosed);
+      svg.append('path').datum(data)
+        .attr('d', lineGen)
+        .attr('transform', `translate(${cx},${cy}) rotate(-90)`)
+        .attr('fill','#3b6cb7').attr('fill-opacity',0.25)
+        .attr('stroke','#3b6cb7').attr('stroke-width',1.5);
+    }
 
     data.forEach((d,i) => {
       if (!d.hero) return;
-      const a0 = angleSlice*i - Math.PI/2, r = logS(d.n)*R;
+      const a0 = angleSlice*i - Math.PI/2, r = logS(d[field])*R;
       svg.append('line').attr('x1',cx).attr('y1',cy)
         .attr('x2',cx+Math.cos(a0)*r).attr('y2',cy+Math.sin(a0)*r)
         .attr('stroke','#d97706').attr('stroke-width',3).attr('opacity',0.9);
@@ -1125,29 +1123,66 @@ function setL3View(v) {
     });
 
     data.forEach((d,i) => {
-      const a = angleSlice*i - Math.PI/2, r = logS(d.n)*R;
+      const a = angleSlice*i - Math.PI/2, r = logS(d[field])*R;
       const x = cx+Math.cos(a)*r, y = cy+Math.sin(a)*r;
       svg.append('circle').attr('cx',x).attr('cy',y).attr('r',4)
         .attr('fill',d.hero?'#d97706':'#3b6cb7').attr('stroke','#fff').attr('stroke-width',1)
         .style('cursor','pointer')
         .on('mouseover',e=>showTip(e,d.note))
         .on('mousemove',moveTip).on('mouseout',hideTip);
-      // Label all (only 16 categories)
       const lx = cx+Math.cos(a)*(R+16), ly = cy+Math.sin(a)*(R+16);
-      const shortName = d.name.replace('\n',' ');
+      const sn = d.name;
       svg.append('text').attr('x',lx).attr('y',ly)
         .attr('text-anchor',Math.cos(a)>0.1?'start':Math.cos(a)<-0.1?'end':'middle')
         .attr('dominant-baseline','middle').attr('font-size',7.5).attr('fill','#475569')
         .attr('font-weight',d.hero?'700':'400')
-        .text(shortName.length>18?shortName.slice(0,17)+'…':shortName);
+        .text(sn.length>18?sn.slice(0,17)+'…':sn);
     });
 
-    svg.append('text').attr('x',cx).attr('y',H-4)
+    svg.append('text').attr('x',cx).attr('y',Hh-4)
       .attr('text-anchor','middle').attr('font-size',8).attr('fill','#64748b').attr('font-style','italic')
       .text('petal radius ∝ log(RNA counts) · Reactome × MitoCarta 3.0');
   }
-  drawReactomeRadial('radial-reactome-neut', 'neutrophil');
-  drawReactomeRadial('radial-reactome-mono', 'monocyte');
+
+  function renderAll(){
+    drawReactome('reactome-svg-neut', 'neut');
+    drawReactome('reactome-svg-mono', 'mono');
+    drawReactomeRadial('radial-reactome-neut', 'neut');
+    drawReactomeRadial('radial-reactome-mono', 'mono');
+    const c=document.getElementById('l3r-count');
+    if(c) c.textContent = selected.size+' of '+SUBGROUPS.length+' shown';
+  }
+
+  function buildChecks(){
+    const host=document.getElementById('l3r-checks'); if(!host) return;
+    host.innerHTML='';
+    const byG={}; SUBGROUPS.forEach(d=>{ (byG[d.g]=byG[d.g]||[]).push(d); });
+    Object.keys(byG).sort().forEach(g=>{
+      const blk=document.createElement('div'); blk.style.marginBottom='4px';
+      const h=document.createElement('div'); h.textContent=g;
+      h.style.cssText='font-weight:700;color:#334155;font-size:10px;text-transform:uppercase;letter-spacing:.04em;margin-top:4px';
+      blk.appendChild(h);
+      byG[g].sort((a,b)=>b.mono-a.mono).forEach(d=>{
+        const lab=document.createElement('label');
+        lab.style.cssText='display:flex;align-items:center;gap:5px;cursor:pointer;padding:1px 0;'+(d.hero?'color:#d97706;font-weight:600':'color:#475569');
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=selected.has(d.id);
+        cb.addEventListener('change',()=>{ cb.checked?selected.add(d.id):selected.delete(d.id); renderAll(); });
+        const sp=document.createElement('span'); sp.textContent=d.name+' ('+d.ng+')';
+        lab.appendChild(cb); lab.appendChild(sp); blk.appendChild(lab);
+      });
+      host.appendChild(blk);
+    });
+  }
+
+  window.l3rSelect = mode => {
+    selected.clear();
+    if(mode==='all') SUBGROUPS.forEach(d=>selected.add(d.id));
+    else if(mode==='default') SUBGROUPS.filter(d=>d.def).forEach(d=>selected.add(d.id));
+    buildChecks(); renderAll();
+  };
+
+  buildChecks();
+  renderAll();
 })();
 
 function setL3rView(v) {
