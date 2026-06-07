@@ -102,15 +102,13 @@ body.rail-open #l3r-rail{transform:none}
   <div style="margin-left:18px;font-size:10px;color:var(--muted);margin-bottom:3px;font-style:italic">↳ zoom into</div>
   <a class="ni" href="#s1"><span class="nd">1a</span>Genomic Context</a>
   <div style="margin-left:18px;font-size:9px;color:var(--muted);text-align:center;margin:2px 0">or</div>
-  <a class="ni" href="#s4"><span class="nd">1b</span>Cellular Compartments</a>
+  <a class="ni" id="nav-1b" href="#s4"><span class="nd">1b</span>Cellular Compartments</a>
   <div class="nconn"></div>
-  <!-- Further zoom: deep dive through compartments → pathways → pathway detail -->
-  <div style="margin-left:18px;font-size:10px;color:var(--muted);margin-bottom:3px;font-style:italic">↳ further zoom</div>
-  <a class="ni" href="#s3"><span class="nd">2</span>Mito Pathways</a>
+  <!-- Further zoom: accessed by clicking inside the view -->
+  <div style="margin-left:18px;font-size:10px;color:var(--muted);margin-bottom:3px;font-style:italic">↳ click to zoom deeper</div>
+  <a class="ni" id="nav-2" href="#s4" onclick="drillTo('2');return true"><span class="nd">2</span>Mito Pathways</a>
   <div class="nconn"></div>
-  <a class="ni" href="#s3r"><span class="nd">3</span>Reactome Groups</a>
-  <div class="nconn"></div>
-  <a class="ni" href="#s2"><span class="nd">4</span>TCA Cycle Detail</a>
+  <a class="ni" id="nav-4" href="#s4" onclick="drillTo('4');return true"><span class="nd">4</span>TCA Cycle</a>
   <div class="nconn"></div>
   <a class="ni" href="#svid"><span class="nd" style="background:#dc2626">🎬</span>Video Guide</a>
   <!-- Persistent cell-type selection chip -->
@@ -376,214 +374,198 @@ body.rail-open #l3r-rail{transform:none}
   </span></div>
 </section>
 
-<!-- ══ L1b ══ -->
+<!-- ══ Explorer: Cell Compartments → Mito Pathways → TCA Cycle ══ -->
 <section id="s4">
-  <div class="sh"><span class="sb">Level 1b</span><h1 class="st">Gene Expression Across Cellular Compartments</h1></div>
-  <p class="sd">GO Cellular Component (CC) terms — area ∝ total RNA of genes annotated to each compartment. In <strong>counted-once</strong> mode, genes annotated to multiple compartments donate RNA/k to each; in <strong>double-counted</strong> mode, full RNA appears in every compartment. Hover any compartment for details.</p>
-  <div style="margin-bottom:8px;display:flex;gap:6px">
-    <button class="btn active" id="l4-btn-grid" onclick="setL4View('grid')">▦ Grid</button>
+  <!-- Dynamic header — updates as you drill down -->
+  <div class="sh">
+    <span class="sb" id="explorer-badge">Level 1b</span>
+    <h1 class="st" id="explorer-title">Gene Expression Across Cellular Compartments</h1>
   </div>
-  <div class="card" id="l4-grid-view" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
-    <img src="cell.png" alt="Cell cross-section (BioRender)" style="width:280px;border-radius:8px;flex-shrink:0;align-self:center">
-    <div style="flex:1;min-width:260px">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Classical Monocyte — GO Cellular Components</div>
-      <svg id="cell-svg"></svg>
+
+  <!-- Breadcrumb drill-down trail -->
+  <div id="explorer-crumb" style="display:flex;align-items:center;gap:6px;margin-bottom:16px;font-size:12px;flex-wrap:wrap;padding:9px 14px;background:#f0f4ff;border:1px solid #c7d7f9;border-radius:8px">
+    <span id="crumb-1b" onclick="drillTo('1b')" style="color:var(--accent);font-weight:700;cursor:pointer" title="Back to Cell Compartments">🔵 Cell Compartments</span>
+    <span id="crumb-arrow-2" style="display:none;color:var(--muted)">›</span>
+    <a id="crumb-2" href="#" onclick="drillTo('2');return false" style="display:none;color:var(--accent);text-decoration:none" title="Back to Mito Pathways">🟠 Mitochondrion Pathways</a>
+    <span id="crumb-arrow-4" style="display:none;color:var(--muted)">›</span>
+    <span id="crumb-4" style="display:none;color:var(--accent);font-weight:700">🧪 TCA Cycle</span>
+    <button id="crumb-back" onclick="drillBack()" style="display:none;margin-left:auto;font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--bdr);background:#fff;cursor:pointer;color:var(--accent);font-weight:600">← Back</button>
+  </div>
+
+  <!-- ══ View 1b: Cell Compartments ══ -->
+  <div id="dl-1b">
+    <p class="sd">GO Cellular Component (CC) terms — area ∝ total RNA of genes annotated to each compartment. In <strong>counted-once</strong> mode, genes annotated to multiple compartments donate RNA/k to each. <strong style="color:#d97706">Click the Mitochondrion tile</strong> to drill into its pathways.</p>
+    <div class="card" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+      <img src="cell.png" alt="Cell cross-section (BioRender)" style="width:240px;border-radius:8px;flex-shrink:0;align-self:center">
+      <div style="flex:1;min-width:260px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Classical Monocyte — GO Cellular Components</div>
+        <svg id="cell-svg"></svg>
+        <p style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic">↑ Click the <strong style="color:#d97706;cursor:pointer" onclick="drillTo('2')">Mitochondrion</strong> tile to zoom into its pathways</p>
+      </div>
+    </div>
+    <!-- radial SVG kept in DOM for the init code, hidden from view -->
+    <div style="display:none"><svg id="cell-radial-svg"></svg></div>
+    <div class="legend" style="margin-top:10px">
+      <div class="li"><div class="ld" style="background:var(--hero)"></div>Mitochondrion — <em>click to drill into pathways</em></div>
+      <div class="li"><div class="ld" style="background:#3b6cb7"></div>Other cellular compartments</div>
+      <div class="li" style="color:var(--muted)">Area ∝ total RNA counts per GO CC term · Tabula Sapiens, classical monocyte</div>
     </div>
   </div>
-  <div class="card" id="l4-radial-view" style="display:none;justify-content:center;align-items:center">
-    <div style="text-align:center">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Classical Monocyte — GO Cellular Components</div>
-      <svg id="cell-radial-svg"></svg>
+
+  <!-- ══ View 2: Mito Pathways (shown after clicking Mitochondrion) ══ -->
+  <div id="dl-2" style="display:none">
+    <p class="sd">Mitochondrial pathways (MitoCarta 3.0) — area ∝ RNA, 1/k split per gene, no double-counting. Toggle between the <strong>pathway treemap</strong> and <strong>Reactome bar chart</strong>. <strong style="color:#2563eb">Click the TCA cycle tile</strong> to zoom into individual reactions.</p>
+    <!-- View toggle -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+      <button class="btn active" id="dl-btn-treemap" onclick="dlMitoView('treemap')">▦ Pathway Map</button>
+      <button class="btn" id="dl-btn-bars" onclick="dlMitoView('bars')">▭ Reactome Bars</button>
+    </div>
+
+    <!-- Treemap sub-view -->
+    <div id="dl-mito-treemap">
+      <div class="card" id="l3-grid-view" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+        <img src="mito.png" alt="Mitochondrion cross-section (BioRender)" style="width:220px;border-radius:8px;flex-shrink:0;align-self:center">
+        <div style="flex:1;min-width:220px">
+          <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Neutrophil</div>
+              <svg id="mito-svg-neut"></svg>
+            </div>
+            <div style="flex:1;min-width:180px">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Classical Monocyte</div>
+              <svg id="mito-svg"></svg>
+            </div>
+          </div>
+          <p style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic">↑ Click <strong style="color:#2563eb">TCA cycle</strong> to zoom into individual reactions</p>
+        </div>
+      </div>
+      <!-- radial SVGs kept in DOM hidden -->
+      <div style="display:none"><svg id="radial-neut"></svg><svg id="radial-mono"></svg></div>
+      <div id="l3-radial-view" class="card" style="display:none;gap:40px;justify-content:center;flex-wrap:wrap;align-items:flex-start"></div>
+      <div class="legend" style="margin-top:10px">
+        <div class="li"><div class="ld" style="background:#d97706"></div>OXPHOS (highest expression)</div>
+        <div class="li"><div class="ld" style="background:#2563eb"></div>Metabolism</div>
+        <div class="li"><div class="ld" style="background:#0d9488"></div>Central dogma</div>
+        <div class="li"><div class="ld" style="background:#7c3aed"></div>Protein import/homeostasis</div>
+        <div class="li"><div class="ld" style="background:#dc2626"></div>Dynamics &amp; surveillance</div>
+        <div class="li" style="color:var(--muted)">Colour = top-level MitoCarta root · area ∝ RNA, split 1/k · Tabula Sapiens blood</div>
+      </div>
+    </div>
+
+    <!-- Reactome bars sub-view (toggle) -->
+    <div id="dl-mito-bars" style="display:none">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Compartment genes grouped into <strong>Reactome pathway categories</strong>. Each bar = one subgroup, length ∝ total RNA. <span style="font-size:11px">👆 Click any bar for pathway details.</span></p>
+      <div style="margin-bottom:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;align-items:center">
+          <label style="display:flex;gap:5px;align-items:center;cursor:pointer;font-size:12px;color:#334155" title="Hide pathways where fewer than 10% of the pathway's genes are mitochondrial">
+            <input type="checkbox" id="l3r-mito-cb" checked onchange="l3rSetMitoMin(this.checked)">
+            Hide &lt;10% mito
+          </label>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;border-left:1px solid #e2e8f0;padding-left:14px">
+          <label style="display:flex;gap:5px;align-items:center;cursor:pointer;font-size:12px;color:#334155">
+            <input type="checkbox" id="l3r-pass-cb" onchange="l3rSetPass(this.checked)">
+            Require &gt;90% expressed
+          </label>
+          <span id="l3r-pass-cellwrap" style="display:flex;gap:8px;align-items:center;font-size:11px;color:#64748b;opacity:0.4">
+            <label style="display:flex;gap:3px;align-items:center;cursor:pointer"><input type="radio" name="l3rPassCell" value="mono" checked onchange="l3rSetPass(null,'mono')"> monocyte</label>
+            <label style="display:flex;gap:3px;align-items:center;cursor:pointer"><input type="radio" name="l3rPassCell" value="neut" onchange="l3rSetPass(null,'neut')"> neutrophil</label>
+          </span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;border-left:1px solid #e2e8f0;padding-left:14px;flex-wrap:wrap">
+          <span style="font-size:12px;color:#334155;white-space:nowrap">Essential detected ≥</span>
+          <input type="range" id="l3r-ess-slider" min="0" max="100" value="0" step="5" style="width:70px;accent-color:#0d9488;cursor:pointer" oninput="l3rSetEss(+this.value)">
+          <span id="l3r-ess-val" style="font-size:11px;color:#0d9488;font-weight:600;min-width:28px">off</span>
+          <select id="l3r-ess-type" onchange="l3rSetEssType(this.value)" style="font-size:11px;border:1px solid #e2e8f0;border-radius:4px;padding:2px 4px;cursor:pointer">
+            <option value="all">All roles</option>
+            <option value="catalyst">Reactome catalysts</option>
+            <option value="kinase_tf">Kinases + TFs</option>
+            <option value="metabolic">Metabolic (GPR)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Depth</span>
+        <button class="btn" id="l3r-depth-root" onclick="l3rSetDepth('root')">Root (26)</button>
+        <button class="btn active" id="l3r-depth-sub" onclick="l3rSetDepth('sub')">Subgroup (126)</button>
+        <button class="btn" id="l3r-depth-leaf" onclick="l3rSetDepth('leaf')">Leaf (826)</button>
+      </div>
+      <div id="l3r-selector" class="card" style="margin-bottom:8px;padding:8px 10px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Display categories</span>
+          <button class="btn" id="l3r-btn-all" onclick="l3rSelect('all')">All 126</button>
+          <button class="btn" onclick="l3rSelect('none')">None</button>
+          <button class="btn" id="l3r-btn-def" onclick="l3rSelect('default')">Defaults (16)</button>
+          <span id="l3r-count" style="font-size:11px;color:var(--muted)"></span>
+        </div>
+        <div id="l3r-checks" style="max-height:160px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1px 14px;font-size:11px"></div>
+      </div>
+      <div class="card" id="l3r-bar-view" style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+        <div style="flex:1.6;min-width:300px;display:flex;gap:16px;align-items:flex-start">
+          <div style="flex:1;min-width:150px">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Neutrophil</div>
+            <svg id="reactome-svg-neut"></svg>
+          </div>
+          <div style="flex:1;min-width:150px">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Classical Monocyte</div>
+            <svg id="reactome-svg-mono"></svg>
+          </div>
+        </div>
+        <div style="flex:1;min-width:240px;border-left:1px solid #e2e8f0;padding-left:18px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Root categories · area ∝ RNA</div>
+          <div style="margin-bottom:12px">
+            <div style="font-size:9px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;margin-bottom:3px">Neutrophil</div>
+            <svg id="reactome-tm-neut"></svg>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;margin-bottom:3px">Classical Monocyte</div>
+            <svg id="reactome-tm-mono"></svg>
+          </div>
+          <div id="l3r-group-legend" style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:12px"></div>
+        </div>
+      </div>
+      <div id="l3r-radial-view" class="card" style="display:none;gap:40px;justify-content:center;flex-wrap:wrap;align-items:flex-start">
+        <div style="text-align:center"><div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Neutrophil</div><svg id="radial-reactome-neut"></svg></div>
+        <div style="text-align:center"><div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Classical Monocyte</div><svg id="radial-reactome-mono"></svg></div>
+      </div>
+      <div class="legend" style="margin-top:10px">
+        <div class="li"><div class="ld" style="background:var(--hero)"></div>Aerobic respiration &amp; ETC (highest expression)</div>
+        <div class="li" style="color:var(--muted)">Bar length ∝ total RNA · fill = Reactome root group · Reactome × Tabula Sapiens</div>
+      </div>
     </div>
   </div>
-  <div class="legend" style="margin-top:10px">
-    <div class="li"><div class="ld" style="background:var(--hero)"></div>Mitochondrion</div>
-    <div class="li"><div class="ld" style="background:#3b6cb7"></div>Other cellular compartments</div>
-    <div class="li" style="color:var(--muted)">Area / radius ∝ total RNA counts per GO CC term (Tabula Sapiens, classical monocyte)</div>
+
+  <!-- ══ View 4: TCA Cycle (shown after clicking TCA cycle tile) ══ -->
+  <div id="dl-4" style="display:none">
+    <p class="sd">The TCA cycle in the mitochondrial matrix — rendered on the <strong><a href="https://escher.github.io" target="_blank" rel="noopener" style="color:inherit">Escher</a></strong> metabolic-map engine. Arc <strong>width ∝ mRNA</strong>. <strong>Particle speed</strong> encodes a flux hypothesis.</p>
+    <div class="warn">⚠️ Arc width = mRNA level (Tabula Sapiens, classical monocyte). Particle speed = flux hypothesis. Neither is measured reaction flux.</div>
+    <div class="card" style="position:relative">
+      <div id="tca-escher" class="escher-tca"></div>
+      <button onclick="(function(){var el=document.getElementById('tca-escher');(el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen).call(el);})()" title="Full screen" style="position:absolute;bottom:8px;right:8px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#475569;z-index:10">⛶ Full screen</button>
+    </div>
+    <div class="flux-ctrl">
+      <span class="fc-lbl">Flux coupling k</span>
+      <span class="fc-end">Equal speed (0)</span>
+      <input type="range" id="tca-flux" min="0" max="1" step="0.01" value="0">
+      <span class="fc-end">∝ mRNA level (1)</span>
+      <span id="tca-flux-val"></span>
+    </div>
+    <p class="disc">⚠ Particle speed = flux hypothesis only — real flux requires ¹³C-MFA or FBA, not derivable from transcriptomics alone.</p>
+    <div class="legend" style="margin-top:10px">
+      <div class="li"><div class="ld" style="background:#dbeafe;border-radius:50%;border:1.5px solid #0369a1"></div>Metabolite node</div>
+      <div class="li"><div class="ld" style="background:var(--blue-hi)"></div>Arc width ∝ mRNA — outer fill = uncertainty range, inner outline = best estimate</div>
+      <div class="li"><div class="ld" style="background:var(--hero)"></div>SDHA / SUCDi — highest expression in this pathway; also ETC Complex II</div>
+      <div class="li"><div class="ld" style="background:#7c3aed"></div>Cofactor outputs (NADH, CO₂, FADH₂, GTP)</div>
+      <div class="li"><div class="ld" style="background:#16a34a"></div>Cofactor input (Acetyl-CoA)</div>
+      <div class="li" style="color:var(--muted)">Dot speed = flux hypothesis (k slider) · expression data: Tabula Sapiens blood, classical monocyte</div>
+    </div>
   </div>
-  <div class="bridge"><span>🔬</span><span>
-    <strong>Thread to Level 2 (Mito Pathways):</strong> Each compartment hosts genes organised into functional pathways.
-    The next level zooms into one compartment (mitochondrion) and maps its pathways by expression across two blood cell types.
-  </span></div>
 </section>
 
-<!-- ══ Level 2 ══ -->
-<section id="s3">
-  <div class="sh"><span class="sb">Level 2</span><h1 class="st">Pathways Inside a Compartment (Mitochondrion)</h1></div>
-  <p class="sd">Mitochondrial pathways (MitoCarta 3.0) detected in two whole-blood cell types (Tabula Sapiens, n=85,233 cells),
-  <strong>nested by MitoCarta's own hierarchy</strong> (root → complex/group → pathway) so a parent's area is exactly the sum of its children — no roll-up double-counting.
-  Area ∝ RNA count; each gene's RNA is <strong>split equally across the pathways it belongs to</strong> (1/k), so the tiles sum to the true total RNA. Hover for the full path &amp; both cell counts. <em>This level is currently scoped to mitochondrial pathways; future versions will support any compartment.</em></p>
-  <div class="brow" style="margin-bottom:10px">
-    <button class="btn active" id="l3-btn-grid" onclick="setL3View('grid')">▦ Grid</button>
-  </div>
-  <div class="card" id="l3-grid-view" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
-    <img src="mito.png" alt="Mitochondrion cross-section (BioRender)" style="width:280px;border-radius:8px;flex-shrink:0;align-self:center">
-    <div style="flex:1;min-width:220px">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Neutrophil</div>
-      <svg id="mito-svg-neut"></svg>
-    </div>
-    <div style="flex:1;min-width:220px">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Classical Monocyte</div>
-      <svg id="mito-svg"></svg>
-    </div>
-  </div>
-  <div class="card" id="l3-radial-view" style="display:none;gap:40px;justify-content:center;flex-wrap:wrap;align-items:flex-start">
-    <div style="text-align:center">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Neutrophil</div>
-      <svg id="radial-neut"></svg>
-    </div>
-    <div style="text-align:center">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Classical Monocyte</div>
-      <svg id="radial-mono"></svg>
-    </div>
-  </div>
-  <div class="legend" style="margin-top:10px">
-    <div class="li"><div class="ld" style="background:#d97706"></div>OXPHOS (highest expression)</div>
-    <div class="li"><div class="ld" style="background:#2563eb"></div>Metabolism</div>
-    <div class="li"><div class="ld" style="background:#0d9488"></div>Central dogma</div>
-    <div class="li"><div class="ld" style="background:#7c3aed"></div>Protein import/homeostasis</div>
-    <div class="li"><div class="ld" style="background:#dc2626"></div>Dynamics &amp; surveillance</div>
-    <div class="li" style="color:var(--muted)">Colour = top-level MitoCarta root · area ∝ RNA, split 1/k per gene (no double-count) · Tabula Sapiens blood</div>
-  </div>
-  <div class="bridge"><span>🔬</span><span>
-    <strong>Thread to Level 3 (Reactome Groups):</strong> The same genes can be re-grouped by Reactome pathway categories,
-    revealing how compartment function maps onto 26 top-level biological processes.
-  </span></div>
-</section>
-
-<!-- ══ Level 3 ══ -->
-<section id="s3r">
-  <div class="sh"><span class="sb">Level 3</span><h1 class="st">Compartment Genes — Reactome Categories</h1></div>
-  <p class="sd">Compartment genes (mitochondrion, shown) grouped into <strong>Reactome pathway categories</strong> (126 subgroups, selectable below). Each bar is one subgroup — <strong>bar length ∝ total mean RNA counts</strong> across its genes (Tabula Sapiens blood) — and its <strong>fill colour encodes the 26 top-level Reactome root group</strong> it belongs to (legend at right). Same two cell types as Level 4. <strong>Each bar carries a thin compartment-specificity bar</strong> along its bottom edge: a warm bar = a pathway largely specific to this compartment; a faint bar = a shared pathway where a few genes from this compartment appear in a broader pathway.
-  <br><span style="color:var(--muted);font-size:12px">👆 Click any bar to list the Reactome pathways &amp; genes inside it — each links into the Reactome PathwayBrowser.</span></p>
-  <div style="margin-bottom:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-    <div style="display:flex;gap:6px">
-      <button class="btn active" id="l3r-btn-bar" onclick="setL3rView('bar')">▭ Bars</button>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;border-left:1px solid #e2e8f0;padding-left:14px">
-      <label style="display:flex;gap:5px;align-items:center;cursor:pointer;font-size:12px;color:#334155"
-             title="Hide pathways where fewer than 10% of the pathway's genes are mitochondrial (mostly non-mito sets that a few multifunctional mito genes leak into)">
-        <input type="checkbox" id="l3r-mito-cb" checked onchange="l3rSetMitoMin(this.checked)">
-        Hide &lt;10% mito
-      </label>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;border-left:1px solid #e2e8f0;padding-left:14px">
-      <label style="display:flex;gap:5px;align-items:center;cursor:pointer;font-size:12px;color:#334155">
-        <input type="checkbox" id="l3r-pass-cb" onchange="l3rSetPass(this.checked)">
-        Require &gt;90% expressed
-      </label>
-      <span id="l3r-pass-cellwrap" style="display:flex;gap:8px;align-items:center;font-size:11px;color:#64748b;opacity:0.4">
-        <label style="display:flex;gap:3px;align-items:center;cursor:pointer">
-          <input type="radio" name="l3rPassCell" value="mono" checked onchange="l3rSetPass(null,'mono')"> monocyte</label>
-        <label style="display:flex;gap:3px;align-items:center;cursor:pointer">
-          <input type="radio" name="l3rPassCell" value="neut" onchange="l3rSetPass(null,'neut')"> neutrophil</label>
-      </span>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;border-left:1px solid #e2e8f0;padding-left:14px;flex-wrap:wrap">
-      <span style="font-size:12px;color:#334155;white-space:nowrap">Essential detected ≥</span>
-      <input type="range" id="l3r-ess-slider" min="0" max="100" value="0" step="5"
-             style="width:70px;accent-color:#0d9488;cursor:pointer" oninput="l3rSetEss(+this.value)">
-      <span id="l3r-ess-val" style="font-size:11px;color:#0d9488;font-weight:600;min-width:28px">off</span>
-      <select id="l3r-ess-type" onchange="l3rSetEssType(this.value)"
-              style="font-size:11px;border:1px solid #e2e8f0;border-radius:4px;padding:2px 4px;cursor:pointer">
-        <option value="all">All roles</option>
-        <option value="catalyst">Reactome catalysts</option>
-        <option value="kinase_tf">Kinases + TFs</option>
-        <option value="metabolic">Metabolic (GPR)</option>
-      </select>
-    </div>
-  </div>
-  <div style="margin-bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-    <span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Depth</span>
-    <button class="btn" id="l3r-depth-root"    onclick="l3rSetDepth('root')">Root (26)</button>
-    <button class="btn active" id="l3r-depth-sub" onclick="l3rSetDepth('sub')">Subgroup (126)</button>
-    <button class="btn" id="l3r-depth-leaf"    onclick="l3rSetDepth('leaf')">Leaf (826)</button>
-  </div>
-  <div id="l3r-selector" class="card" style="margin-bottom:8px;padding:8px 10px">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-      <span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Display categories</span>
-      <button class="btn" id="l3r-btn-all" onclick="l3rSelect('all')">All 126</button>
-      <button class="btn" onclick="l3rSelect('none')">None</button>
-      <button class="btn" id="l3r-btn-def" onclick="l3rSelect('default')">Defaults (16)</button>
-      <span id="l3r-count" style="font-size:11px;color:var(--muted)"></span>
-    </div>
-    <div id="l3r-checks" style="max-height:160px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1px 14px;font-size:11px"></div>
-  </div>
-  <div class="card" id="l3r-bar-view" style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
-    <!-- Bars — length ∝ RNA -->
-    <div style="flex:1.6;min-width:300px;display:flex;gap:16px;align-items:flex-start">
-      <div style="flex:1;min-width:150px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Neutrophil</div>
-        <svg id="reactome-svg-neut"></svg>
-      </div>
-      <div style="flex:1;min-width:150px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Classical Monocyte</div>
-        <svg id="reactome-svg-mono"></svg>
-      </div>
-    </div>
-    <!-- Rectangles (treemap, area ∝ RNA) on the right -->
-    <div style="flex:1;min-width:240px;border-left:1px solid #e2e8f0;padding-left:18px">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Root categories · area ∝ RNA</div>
-      <div style="margin-bottom:12px">
-        <div style="font-size:9px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;margin-bottom:3px">Neutrophil</div>
-        <svg id="reactome-tm-neut"></svg>
-      </div>
-      <div>
-        <div style="font-size:9px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;margin-bottom:3px">Classical Monocyte</div>
-        <svg id="reactome-tm-mono"></svg>
-      </div>
-      <div id="l3r-group-legend" style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:12px"></div>
-    </div>
-  </div>
-  <div class="card" id="l3r-radial-view" style="display:none;gap:40px;justify-content:center;flex-wrap:wrap;align-items:flex-start">
-    <div style="text-align:center">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Neutrophil</div>
-      <svg id="radial-reactome-neut"></svg>
-    </div>
-    <div style="text-align:center">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Classical Monocyte</div>
-      <svg id="radial-reactome-mono"></svg>
-    </div>
-  </div>
-  <div class="legend" style="margin-top:10px">
-    <div class="li"><div class="ld" style="background:var(--hero)"></div>Aerobic respiration &amp; ETC (highest expression)</div>
-    <div class="li" style="color:var(--muted)">Bar length ∝ total RNA counts · fill colour = Reactome root group (legend at right) · Reactome × Tabula Sapiens</div>
-    <div class="li" style="color:var(--muted)">"Require &gt;90% expressed" dims any category with no leaf pathway whose genes are nearly all detected (gene detected in ≥10% of that cell type's cells; leaf passes if &gt;90% of its genes detected). The ▸ marks the lowest Reactome branch the survivors collapse to.</div>
-  </div>
-  <div class="bridge"><span>🔬</span><span>
-    <strong>Thread to Level 4 (TCA Cycle Detail):</strong> Aerobic respiration and the ETC are the most highly expressed pathway group in these blood cell types.
-    The final level zooms to the TCA cycle — one individual pathway — using the Escher metabolic-map engine.
-  </span></div>
-</section>
-
-<!-- ══ Level 4 ══ -->
-<section id="s2">
-  <div class="sh"><span class="sb h">Level 4</span><h1 class="st">Individual Pathway: TCA Cycle (Krebs Cycle)</h1></div>
-  <p class="sd">The TCA cycle in the mitochondrial matrix — an example of a single pathway — rendered on the <strong><a href="https://escher.github.io" target="_blank" rel="noopener" style="color:inherit">Escher</a></strong> metabolic-map engine (King et al. 2015, <em>PLOS Comput Biol</em>) with expression encodings layered on top.
-  Arc <strong>width ∝ mRNA</strong> (Tabula Sapiens, classical monocyte). The outer <strong>no-infill envelope</strong> = uncertainty range; the solid outline = best-estimate expression.
-  <strong>Particle speed</strong> encodes a flux hypothesis — drag the slider to explore.</p>
-  <div class="warn">⚠️ Arc width = mRNA level (Tabula Sapiens, classical monocyte). Particle speed = flux hypothesis. Neither is measured reaction flux.</div>
-  <div class="card" style="position:relative">
-    <div id="tca-escher" class="escher-tca"></div>
-    <button onclick="(function(){var el=document.getElementById('tca-escher');(el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen).call(el);})()" title="Full screen" style="position:absolute;bottom:8px;right:8px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#475569;z-index:10">⛶ Full screen</button>
-  </div>
-  <div class="flux-ctrl">
-    <span class="fc-lbl">Flux coupling k</span>
-    <span class="fc-end">Equal speed (0)</span>
-    <input type="range" id="tca-flux" min="0" max="1" step="0.01" value="0">
-    <span class="fc-end">∝ mRNA level (1)</span>
-    <span id="tca-flux-val"></span>
-  </div>
-  <p class="disc">⚠ Particle speed = flux hypothesis only — real flux requires ¹³C-MFA or FBA, not derivable from transcriptomics alone.</p>
-  <div class="legend" style="margin-top:10px">
-    <div class="li"><div class="ld" style="background:#dbeafe;border-radius:50%;border:1.5px solid #0369a1"></div>Metabolite node</div>
-    <div class="li"><div class="ld" style="background:var(--blue-hi)"></div>Arc width ∝ mRNA (Tabula Sapiens monocyte) — outer fill = uncertainty range, inner outline = best estimate</div>
-    <div class="li"><div class="ld" style="background:var(--hero)"></div>SDHA / SUCDi — highest expression in this pathway; also ETC Complex II</div>
-    <div class="li"><div class="ld" style="background:#7c3aed"></div>Cofactor outputs (NADH, CO₂, FADH₂, GTP)</div>
-    <div class="li"><div class="ld" style="background:#16a34a"></div>Cofactor input (Acetyl-CoA)</div>
-    <div class="li" style="color:var(--muted)">Dot speed = flux hypothesis (k slider) · expression data: Tabula Sapiens blood, classical monocyte</div>
-  </div>
-</section>
+<!-- s3, s3r, s2 collapsed into the Explorer above; keep empty shells for nav-link anchors -->
+<div id="s3" style="display:none"></div>
+<div id="s3r" style="display:none"></div>
+<div id="s2" style="display:none"></div>
 
 </div>
 
@@ -733,8 +715,12 @@ document.querySelectorAll('section').forEach(s=>
   new IntersectionObserver(es=>{
     if(es[0].isIntersecting){
       document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-      const a=document.querySelector(`.ni[href="#${es[0].target.id}"]`);
-      if(a)a.classList.add('active');
+      if(es[0].target.id==='s4' && typeof _syncNavToExplorer==='function'){
+        _syncNavToExplorer();
+      } else {
+        const a=document.querySelector(`.ni[href="#${es[0].target.id}"]`);
+        if(a)a.classList.add('active');
+      }
     }
     if(es[0].target.id==='s3r'){ railState.visible=es[0].isIntersecting; syncRail(); }
   },{threshold:0.35}).observe(s));
@@ -1341,10 +1327,11 @@ const TCA_META = {"CS": {"gene": "CS", "rna": 0.756, "neut": 0.109, "name": "Cit
       .attr('fill-opacity',d=> isHero(d)?1:0.82)
       .attr('stroke',      d=> isHero(d)?'#f59e0b':'#fff')
       .attr('stroke-width',d=> isHero(d)?HSW:0.7)
-      .attr('rx',1).style('cursor','pointer')
+      .attr('rx',1).style('cursor',d=>d.data.name==='TCA cycle'?'zoom-in':'pointer')
       .on('mouseover',(e,d)=>showTip(e,
-        `${d.ancestors().slice(0,-1).reverse().map(a=>a.data.name).join(' › ')}\nNeutrophil: ${d.data.val?d.data.val.neutrophil.toFixed(2):'–'}\nMonocyte: ${d.data.val?d.data.val.monocyte.toFixed(2):'–'}${isHero(d)?'\n✦ contains SDHA':''}`))
-      .on('mousemove',moveTip).on('mouseout',hideTip);
+        `${d.ancestors().slice(0,-1).reverse().map(a=>a.data.name).join(' › ')}\nNeutrophil: ${d.data.val?d.data.val.neutrophil.toFixed(2):'–'}\nMonocyte: ${d.data.val?d.data.val.monocyte.toFixed(2):'–'}${isHero(d)?'\n✦ contains SDHA':''}${d.data.name==='TCA cycle'?'\n\n🔍 Click to view individual reactions':''}`))
+      .on('mousemove',moveTip).on('mouseout',hideTip)
+      .on('click',(e,d)=>{ if(d.data.name==='TCA cycle') drillTo('4'); });
 
     // Leaf label groups — hidden by default; revealed by zoom handler when tile is big enough
     const textG = g.selectAll('g.ll').data(root.leaves()).join('g').attr('class','ll')
@@ -2318,11 +2305,14 @@ function setL3rView(v) {
       .attr('fill',d=>d.data.hero?'#d97706':'#3b6cb7')
       .attr('stroke','#fff').attr('stroke-width',2)
       .attr('rx',3).attr('opacity',.90)
-      .style('cursor','pointer')
-      .on('mouseover',(e,d)=>showTip(e,d.data.note))
-      .on('mousemove',moveTip).on('mouseout',hideTip);
+      .style('cursor',d=>d.data.hero?'zoom-in':'default')
+      .on('mouseover',(e,d)=>showTip(e,d.data.hero?d.data.note+'\n\n🔍 Click to zoom into pathways':d.data.note))
+      .on('mousemove',moveTip).on('mouseout',hideTip)
+      .on('click',(e,d)=>{ if(d.data.hero) drillTo('2'); });
 
     svg.selectAll('g.cw').data(root.leaves()).join('g').attr('class','cw')
+      .style('cursor',d=>d.data.hero?'zoom-in':'default')
+      .on('click',(e,d)=>{ if(d.data.hero) drillTo('2'); })
       .each(function(d){
         const tw=d.x1-d.x0, th=d.y1-d.y0;
         if(tw<28||th<16) return;
@@ -2759,6 +2749,96 @@ function initAndrews(){
     item.append('span').style('width','16px').style('height','3px').style('border-radius','2px').style('background',c.color).style('display','inline-block');
     item.append('span').style('color','#475569').text(c.label);
   });
+}
+
+// ════════════════════════════════════════════════════
+// EXPLORER DRILL-DOWN CONTROLLER
+// ════════════════════════════════════════════════════
+// level: '1b' = Cell Compartments, '2' = Mito Pathways, '4' = TCA Cycle
+let _explorerLevel = '1b';
+
+const _EXPLORER_META = {
+  '1b': { badge: 'Level 1b', title: 'Gene Expression Across Cellular Compartments' },
+  '2':  { badge: 'Level 2',  title: 'Pathways Inside Mitochondrion' },
+  '4':  { badge: 'Level 4',  title: 'Individual Pathway: TCA Cycle (Krebs Cycle)' },
+};
+
+function drillTo(level) {
+  _explorerLevel = level;
+  const meta = _EXPLORER_META[level];
+
+  // Update section header badge + title
+  const badge = document.getElementById('explorer-badge');
+  const title = document.getElementById('explorer-title');
+  if (badge) badge.textContent = meta.badge;
+  if (title) title.textContent = meta.title;
+
+  // Show / hide the three sub-views
+  document.getElementById('dl-1b').style.display = level === '1b' ? '' : 'none';
+  document.getElementById('dl-2').style.display  = level === '2'  ? '' : 'none';
+  document.getElementById('dl-4').style.display  = level === '4'  ? '' : 'none';
+
+  // Breadcrumb visibility
+  const show = id => { const el = document.getElementById(id); if(el) el.style.display = ''; };
+  const hide = id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; };
+
+  // crumb-1b always visible; style as link when not current level
+  const c1b = document.getElementById('crumb-1b');
+  if (c1b) {
+    c1b.style.fontWeight = level === '1b' ? '700' : '400';
+    c1b.style.cursor     = level === '1b' ? 'default' : 'pointer';
+  }
+
+  if (level === '1b') {
+    hide('crumb-arrow-2'); hide('crumb-2');
+    hide('crumb-arrow-4'); hide('crumb-4');
+    hide('crumb-back');
+  } else if (level === '2') {
+    show('crumb-arrow-2');
+    const c2 = document.getElementById('crumb-2');
+    if (c2) { c2.style.display=''; c2.style.fontWeight='700'; c2.style.cursor='default'; c2.style.pointerEvents='none'; }
+    hide('crumb-arrow-4'); hide('crumb-4');
+    show('crumb-back');
+  } else if (level === '4') {
+    show('crumb-arrow-2');
+    const c2 = document.getElementById('crumb-2');
+    if (c2) { c2.style.display=''; c2.style.fontWeight='400'; c2.style.cursor='pointer'; c2.style.pointerEvents=''; }
+    show('crumb-arrow-4'); show('crumb-4');
+    show('crumb-back');
+  }
+
+  // Sync sidebar nav highlight to drill level
+  _syncNavToExplorer();
+
+  // Scroll to section top smoothly
+  const sec = document.getElementById('s4');
+  if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function _syncNavToExplorer() {
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  const navId = _explorerLevel === '4' ? 'nav-4'
+              : _explorerLevel === '2' ? 'nav-2'
+              : 'nav-1b';
+  const el = document.getElementById(navId);
+  if (el) el.classList.add('active');
+}
+
+function drillBack() {
+  if (_explorerLevel === '4') drillTo('2');
+  else if (_explorerLevel === '2') drillTo('1b');
+}
+
+// Toggle between pathway treemap and Reactome bars inside View 2
+function dlMitoView(view) {
+  const treemap = document.getElementById('dl-mito-treemap');
+  const bars    = document.getElementById('dl-mito-bars');
+  const btnT    = document.getElementById('dl-btn-treemap');
+  const btnB    = document.getElementById('dl-btn-bars');
+  if (treemap) treemap.style.display = view === 'treemap' ? '' : 'none';
+  if (bars)    bars.style.display    = view === 'bars'    ? '' : 'none';
+  if (btnT)    btnT.classList.toggle('active', view === 'treemap');
+  if (btnB)    btnB.classList.toggle('active', view === 'bars');
 }
 </script>
 </body>
