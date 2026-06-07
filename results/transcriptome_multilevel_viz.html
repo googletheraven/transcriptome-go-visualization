@@ -400,7 +400,7 @@ body.rail-open #l3r-rail{transform:none}
       <div style="flex:1;min-width:260px">
         <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Classical Monocyte — GO Cellular Components</div>
         <svg id="cell-svg"></svg>
-        <p style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic">↑ Click the <strong style="color:#d97706;cursor:pointer" onclick="drillTo('2')">Mitochondrion</strong> tile to zoom into its pathways</p>
+        <p style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic">↑ Click any <strong style="color:#d97706">colored tile</strong> to zoom into its pathways</p>
       </div>
     </div>
     <!-- radial SVG kept in DOM for the init code, hidden from view -->
@@ -455,6 +455,9 @@ body.rail-open #l3r-rail{transform:none}
     <!-- Reactome bars sub-view (toggle) -->
     <div id="dl-mito-bars" style="display:none">
       <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Compartment genes grouped into <strong>Reactome pathway categories</strong>. Each bar = one subgroup, length ∝ total RNA. <span style="font-size:11px">👆 Click any bar for pathway details.</span></p>
+      <div class="card" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px">
+        <img id="dl-comp-img" src="mito.png" alt="Compartment" style="width:220px;border-radius:8px;flex-shrink:0;align-self:center">
+        <div style="flex:1;min-width:300px">
       <div style="margin-bottom:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
         <div style="display:flex;gap:8px;align-items:center">
           <label style="display:flex;gap:5px;align-items:center;cursor:pointer;font-size:12px;color:#334155" title="Hide pathways where fewer than 10% of the pathway's genes are mitochondrial">
@@ -524,6 +527,8 @@ body.rail-open #l3r-rail{transform:none}
           <div id="l3r-group-legend" style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:12px"></div>
         </div>
       </div>
+        </div><!-- close inner flex div -->
+      </div><!-- close card div -->
       <div id="l3r-radial-view" class="card" style="display:none;gap:40px;justify-content:center;flex-wrap:wrap;align-items:flex-start">
         <div style="text-align:center"><div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Neutrophil</div><svg id="radial-reactome-neut"></svg></div>
         <div style="text-align:center"><div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Classical Monocyte</div><svg id="radial-reactome-mono"></svg></div>
@@ -2264,14 +2269,14 @@ function setL3rView(v) {
 
   const L4_META = [
     {id:'GO:0005739', name:'Mitochondrion', hero:true},
-    {id:'GO:0005829', name:'Cytosol',                hero:false},
-    {id:'GO:0005634', name:'Nucleus',                hero:false},
-    {id:'GO:0005886', name:'Plasma\nMembrane',      hero:false},
-    {id:'GO:0005783', name:'Endoplasmic\nReticulum',hero:false},
-    {id:'GO:0005777', name:'Peroxisome',             hero:false},
-    {id:'GO:0005576', name:'Extracellular\nRegion', hero:false},
-    {id:'GO:0005794', name:'Golgi\nApparatus',      hero:false},
-    {id:'GO:0005856', name:'Cytoskeleton',           hero:false},
+    {id:'GO:0005829', name:'Cytosol',                hero:true},
+    {id:'GO:0005634', name:'Nucleus',                hero:true},
+    {id:'GO:0005886', name:'Plasma\nMembrane',      hero:true},
+    {id:'GO:0005783', name:'Endoplasmic\nReticulum',hero:true},
+    {id:'GO:0005777', name:'Peroxisome',             hero:true},
+    {id:'GO:0005576', name:'Extracellular\nRegion', hero:true},
+    {id:'GO:0005794', name:'Golgi\nApparatus',      hero:true},
+    {id:'GO:0005856', name:'Cytoskeleton',           hero:true},
   ];
   // honest (1/k counted-once) vs flat (double-counted) RNA per GO CC term,
   // wired to the global flat↔counted-once toggle. Gene universe = mito-annotated
@@ -2308,11 +2313,11 @@ function setL3rView(v) {
       .style('cursor',d=>d.data.hero?'zoom-in':'default')
       .on('mouseover',(e,d)=>showTip(e,d.data.hero?d.data.note+'\n\n🔍 Click to zoom into pathways':d.data.note))
       .on('mousemove',moveTip).on('mouseout',hideTip)
-      .on('click',(e,d)=>{ if(d.data.hero) drillTo('2'); });
+      .on('click',(e,d)=>{ if(d.data.hero) drillTo('2', d.data.name); });
 
     svg.selectAll('g.cw').data(root.leaves()).join('g').attr('class','cw')
       .style('cursor',d=>d.data.hero?'zoom-in':'default')
-      .on('click',(e,d)=>{ if(d.data.hero) drillTo('2'); })
+      .on('click',(e,d)=>{ if(d.data.hero) drillTo('2', d.data.name); })
       .each(function(d){
         const tw=d.x1-d.x0, th=d.y1-d.y0;
         if(tw<28||th<16) return;
@@ -2756,6 +2761,7 @@ function initAndrews(){
 // ════════════════════════════════════════════════════
 // level: '1b' = Cell Compartments, '2' = Mito Pathways, '4' = TCA Cycle
 let _explorerLevel = '1b';
+let _explorerCompartment = 'Mitochondrion'; // Track selected compartment for Level 2
 
 const _EXPLORER_META = {
   '1b': { badge: 'Level 1b', title: 'Gene Expression Across Cellular Compartments' },
@@ -2763,8 +2769,21 @@ const _EXPLORER_META = {
   '4':  { badge: 'Level 4',  title: 'Individual Pathway: TCA Cycle (Krebs Cycle)' },
 };
 
-function drillTo(level) {
+const _COMPARTMENT_IMAGES = {
+  'Mitochondrion': 'mito.png',
+  'Cytosol': 'mito.png', // placeholder - same image for now
+  'Nucleus': 'mito.png',
+  'Plasma\nMembrane': 'mito.png',
+  'Endoplasmic\nReticulum': 'mito.png',
+  'Peroxisome': 'mito.png',
+  'Extracellular\nRegion': 'mito.png',
+  'Golgi\nApparatus': 'mito.png',
+  'Cytoskeleton': 'mito.png',
+};
+
+function drillTo(level, compartment) {
   _explorerLevel = level;
+  if (compartment) _explorerCompartment = compartment;
   const meta = _EXPLORER_META[level];
 
   // Update section header badge + title
@@ -2839,6 +2858,11 @@ function dlMitoView(view) {
   if (bars)    bars.style.display    = view === 'bars'    ? '' : 'none';
   if (btnT)    btnT.classList.toggle('active', view === 'treemap');
   if (btnB)    btnB.classList.toggle('active', view === 'bars');
+  // Sync compartment image in bars view
+  const compImg = document.getElementById('dl-comp-img');
+  if (compImg && view === 'bars') {
+    compImg.src = _COMPARTMENT_IMAGES[_explorerCompartment] || 'mito.png';
+  }
 }
 </script>
 </body>
