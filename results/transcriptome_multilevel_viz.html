@@ -414,7 +414,7 @@ body.rail-open #l3r-rail{transform:none}
 
   <!-- ══ View 2: Mito Pathways (shown after clicking Mitochondrion) ══ -->
   <div id="dl-2" style="display:none">
-    <p class="sd">Mitochondrial pathways (MitoCarta 3.0) — area ∝ RNA, 1/k split per gene, no double-counting. Toggle between the <strong>pathway treemap</strong> and <strong>Reactome bar chart</strong>. <strong style="color:#2563eb">Click the TCA cycle tile</strong> to zoom into individual reactions.</p>
+    <p class="sd">Mitochondrial pathways (MitoCarta 3.0) — area ∝ RNA, 1/k split per gene, no double-counting. Toggle between the <strong>pathway treemap</strong> and <strong>Reactome bar chart</strong>. <strong style="color:#2563eb">Click on pathways</strong> to see details; <strong>TCA cycle</strong> has a detailed metabolic map showing individual reactions.</p>
     <!-- View toggle -->
     <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
       <button class="btn active" id="dl-btn-treemap" onclick="dlMitoView('treemap')">▦ Pathway Map</button>
@@ -1332,9 +1332,12 @@ const TCA_META = {"CS": {"gene": "CS", "rna": 0.756, "neut": 0.109, "name": "Cit
       .attr('fill-opacity',d=> isHero(d)?1:0.82)
       .attr('stroke',      d=> isHero(d)?'#f59e0b':'#fff')
       .attr('stroke-width',d=> isHero(d)?HSW:0.7)
-      .attr('rx',1).style('cursor',d=>d.data.name==='TCA cycle'?'zoom-in':'pointer')
-      .on('mouseover',(e,d)=>showTip(e,
-        `${d.ancestors().slice(0,-1).reverse().map(a=>a.data.name).join(' › ')}\nNeutrophil: ${d.data.val?d.data.val.neutrophil.toFixed(2):'–'}\nMonocyte: ${d.data.val?d.data.val.monocyte.toFixed(2):'–'}${isHero(d)?'\n✦ contains SDHA':''}${d.data.name==='TCA cycle'?'\n\n🔍 Click to view individual reactions':''}`))
+      .attr('rx',1).style('cursor',d=>d.data.name==='TCA cycle'?'zoom-in':'default')
+      .on('mouseover',(e,d)=>{
+        const tip = `${d.ancestors().slice(0,-1).reverse().map(a=>a.data.name).join(' › ')}\nNeutrophil: ${d.data.val?d.data.val.neutrophil.toFixed(2):'–'}\nMonocyte: ${d.data.val?d.data.val.monocyte.toFixed(2):'–'}${isHero(d)?'\n✦ contains SDHA':''}`;
+        const suffix = d.data.name==='TCA cycle' ? '\n\n🔍 Click to view detailed metabolic map' : '';
+        showTip(e, tip + suffix);
+      })
       .on('mousemove',moveTip).on('mouseout',hideTip)
       .on('click',(e,d)=>{ if(d.data.name==='TCA cycle') drillTo('4'); });
 
